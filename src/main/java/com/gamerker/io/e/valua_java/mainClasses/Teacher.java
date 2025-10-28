@@ -3,28 +3,27 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  * @author hp
  */
 public class Teacher extends User {
-    private List<Test> testsCreated;
+    // Teacher crea y evalua tests
     
-    public Teacher(String username) {
-        super(username, "Teacher");
-        this.testsCreated = new ArrayList<>();
+    public Teacher(String id, String name, String email, String password) {
+        super(id, name, email, password);
     }
     
-    public void addNewTest(Test newTest) {
-        testsCreated.add(newTest);
-    }
+    // Teacher se agrega a Tests
     
-    public int getTestsCreated() {
-        return testsCreated.size();
+    @Override
+    public void showMenu() {
+        System.out.println("\n===== MENU DE DOCENTES =====");
+        System.out.println("1. Ver pruebas creadas");
+        System.out.println("2. Revisar estudiantes");
+        System.out.println("3. Exportar resultados");
+        System.out.println("4. Salir de E-valua");
+        System.out.println("========================");
     }
     
     @Override

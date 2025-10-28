@@ -3,41 +3,27 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
-
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  *
  * @author hp
  */
 public class Student extends User {
-    private List<Result> testsHistory;
+    // Student puede tomar un test y ver sus result
     
-    public Student(String username) {
-        super(username, "Student");
-        this.testsHistory = new ArrayList<>();
+    public Student(String id, String name, String email, String password) {
+        super(id, name, email, password);
     }
+
+    // Student esta asociado a un Result
     
-    public void addTestResult(Result result) {
-        testsHistory.add(result);
+    @Override
+    public void showMenu() {
+        System.out.println("\n===== MENU DE ESTUDIANTES =====");
+        System.out.println("1. Realizar prueba");
+        System.out.println("2. Ver historial de resultados");
+        System.out.println("3. Salir de E-valua");
+        System.out.println("========================");
     }
-    
-    public double getAverageScore() {
-        if (testsHistory.isEmpty()) return 0.0;
-        
-        double total = 0;
-        for (Result result : testsHistory) {
-            total += result.getPercentage();
-        }
-        return total / testsHistory.size();
-    }
-    
-    public int getTestsTaken() {
-        return testsHistory.size();
-    }
-    
-    public List<Result> getTestHistory() { return new ArrayList<>(testsHistory); }
 
     @Override
     public String getInfo() {

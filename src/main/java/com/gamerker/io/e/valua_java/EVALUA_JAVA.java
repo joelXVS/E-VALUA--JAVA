@@ -23,18 +23,7 @@ public class EVALUA_JAVA {
         System.out.println("=== CARGANDO... ===");
         Thread.sleep(1500);
         
-        while (true) {
-            System.out.println("\n=== MENU PRINCIPAL - E-VALUA ===");
-            System.out.println("1. Ver pruebas disponibles");
-            System.out.println("2. Ver historial de resultados");
-            System.out.println("3. Exportar resultados a PDF");
-            System.out.println("4. Gestionar usuarios");
-            System.out.println("5. Gestionar pruebas");
-            System.out.println("6. Salir");
-            System.out.print("Elije una opcion: ");
-        }
-        
-        actualUser = new Student("Jose Angel Perea Valencia");
+        actualUser = new Student("Jose Angel Perea Valencias");
         System.out.println(actualUser.getUsername());
         
         showMainMenu(actualUser);
