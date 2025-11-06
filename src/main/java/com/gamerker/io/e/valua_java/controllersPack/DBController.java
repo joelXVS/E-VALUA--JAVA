@@ -78,6 +78,14 @@ public class DBController implements Manageable {
             ro.addProperty("studentUsername", r.getStudentUsername());
             ro.addProperty("testTitle", r.getTestTitle());
             JsonArray ans = new JsonArray();
+
+            for (String a : r.getAnswers()) {
+                JsonObject obj = new JsonObject();
+                obj.addProperty("id", r.getAnswers().indexOf(a));
+                obj.addProperty("userAnswer", a);
+                ans.add(obj);
+            }
+
             ro.add("answers", ans);
             arr.add(ro);
         }

@@ -2,10 +2,13 @@ com\gamerker\io\e\valua_java\mainClasses\MathQuestion.class
 com\gamerker\io\e\valua_java\mainClasses\Teacher.class
 com\gamerker\io\e\valua_java\controllersPack\DBController.class
 com\gamerker\io\e\valua_java\mainClasses\Student.class
+com\gamerker\io\e\valua_java\visuals\ControladorApp$1.class
 com\gamerker\io\e\valua_java\interfaces\Exportable.class
 com\gamerker\io\e\valua_java\mainClasses\User.class
+com\gamerker\io\e\valua_java\visuals\ControladorApp.class
 com\gamerker\io\e\valua_java\mainClasses\Test.class
 com\gamerker\io\e\valua_java\mainClasses\Result.class
+com\gamerker\io\e\valua_java\visuals\ControladorApp$2.class
 com\gamerker\io\e\valua_java\controllersPack\ResultPdfController.class
 com\gamerker\io\e\valua_java\mainClasses\Question.class
 com\gamerker\io\e\valua_java\controllersPack\AppController.class
