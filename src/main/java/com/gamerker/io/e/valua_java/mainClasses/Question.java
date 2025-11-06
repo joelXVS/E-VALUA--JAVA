@@ -3,28 +3,21 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
-
 /**
  *
  * @author hp
  */
 public abstract class Question {
-    protected String text, type;
-    protected int points;
-    
-    public Question(String text, int points, String type) {
-        this.text = text;
-        this.type = type;
-        this.points = points;
+    protected String questionText;
+    protected String correctAnswer;
+
+    public Question(String questionText, String correctAnswer) {
+        this.questionText = questionText;
+        this.correctAnswer = correctAnswer;
     }
-    
-    // Verificar si se selecciono la respuesta correcta
+
+    public String getQuestionText() { return questionText; }
+    public String getCorrectAnswer() { return correctAnswer; }
+
     public abstract boolean verifyAnswer(String userAnswer);
-    // Mostrar la pregunta y lesperar para responder
-    public abstract String renderQuestion();
-    
-    // Obtener puntos por respuesta correcta
-    public int getPoints() { return points; }
-    // Obtener tipo de pregunta
-    public String getType() { return type; }
 }

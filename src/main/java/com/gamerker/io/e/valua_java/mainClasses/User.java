@@ -3,38 +3,41 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
-import java.io.Serializable;
-
 /**
  *
  * @author hp
  */
-public abstract class User implements Serializable {
-    private String id, name, email, password;
+public abstract class User {
+    protected String username;
+    protected String displayName;
 
-    public User(String id, String name, String email, String password) {
-        this.id = id;
-        this.name = name;
-        this.email = email;
-        this.password = password;
+    public User(String username, String displayName) {
+        this.username = username;
+        this.displayName = displayName;
     }
 
-    // Getters y setters
-    public String getId() { return id; }
-    public void setId(String id) { this.id = id; }
+    public String getUsername() { return username; }
+    public String getDisplayName() { return displayName; }
 
-    public String getName() { return name; }
-    public void setName(String name) { this.name = name; }
+    public abstract String getRole();
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    // Serialización simple para DBController (formato: role|username|displayName)
+    public String serialize() {
+        return String.format("%s|%s|%s", getRole(), username, displayName);
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
-
-    /**
-     * Metodo abstracto para mostrar menu y obtener info segun usuario
-     */
-    public abstract void showMenu();
-    public abstract void getInfo();
+    public static User deserialize(String line) {
+        if (line == null || line.isEmpty()) return null;
+        String[] parts = line.split("\\|", 3);
+        if (parts.length < 3) return null;
+        String role = parts[0];
+        String user = parts[1];
+        String display = parts[2];
+        switch (role.toLowerCase()) {
+            case "teacher": return new Teacher(user, display);
+            case "student": return new Student(user, display);
+            case "admin": return new Admin(user, display);
+            default: return null;
+        }
+    }
 }

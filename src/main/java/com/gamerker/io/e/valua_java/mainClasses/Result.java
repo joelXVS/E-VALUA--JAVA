@@ -3,66 +3,58 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
-import java.time.LocalDateTime;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 /**
  *
  * @author hp
  */
 public class Result {
-    private String resultId;
-    private User user;
-    private Test test;
-    private LocalDateTime date;
-    private Map<Question, Boolean> saveAnswers;
-    private int totalScore;
-    
-    public Result(User user, Test test) {
-        this.resultId = UUID.randomUUID().toString();
-        this.user = user;
-        this.test = test;
-        this.date = LocalDateTime.now();
-        this.saveAnswers = new HashMap<>();
-        this.totalScore = 0;
+    private String studentUsername;
+    private String testTitle;
+    private int score;
+    private int total;
+    private double percentage;
+    private List<String> answers;
+
+    public Result(String studentUsername, String testTitle, int score, int total, double percentage, List<String> answers) {
+        this.studentUsername = studentUsername;
+        this.testTitle = testTitle;
+        this.score = score;
+        this.total = total;
+        this.percentage = percentage;
+        this.answers = new ArrayList<>(answers);
     }
-    
-    public void addAnswer(Question question, boolean isCorrect) {
-        saveAnswers.put(question, isCorrect);
-        if (isCorrect) {
-            totalScore += question.getPoints();
+
+    public String getStudentUsername() { return studentUsername; }
+    public String getTestTitle() { return testTitle; }
+
+    public String summary() {
+        return String.format("%s - %s: %d/%d (%.2f%%)", studentUsername, testTitle, score, total, percentage);
+    }
+
+    public String detailed() {
+        StringBuilder sb = new StringBuilder();
+        sb.append(String.format("Estudiante: %s%nPrueba: %s%nPuntuación: %d/%d (%.2f%%)%n", studentUsername, testTitle, score, total, percentage));
+        sb.append("Respuestas del estudiante:\n");
+        for (int i=0;i<answers.size();i++) {
+            sb.append(String.format("%d) %s%n", i+1, answers.get(i)));
         }
+        return sb.toString();
     }
-    
-    // Getters
-    public int getMaxPossibleScore() {
-        return test.getTotalPoints();
+
+    public List<String> getAnswers() {
+        return answers;
     }
-    
+
+    public int getScore() {
+        return score;
+    }
+
+    public int getTotal() {
+        return total;
+    }
+
     public double getPercentage() {
-        if (getMaxPossibleScore() == 0) return 0.0;
-        return (double) totalScore / getMaxPossibleScore() * 100;
-    }
-    
-    public String getFinalVL() {
-        double percentage = getPercentage();
-        if (percentage >= 90) return "A";
-        if (percentage >= 80) return "B";
-        if (percentage >= 70) return "C";
-        if (percentage >= 60) return "D";
-        return "F";
-    }
-    
-    public String getResultId() { return resultId; }
-    public User getUser() { return user; }
-    public Test getTest() { return test; }
-    public LocalDateTime getDate() { return date; }
-    public Map<Question, Boolean> getAnswers() { return new HashMap<>(saveAnswers); }
-    public int getTotalScore() { return totalScore; }
-    public String getInfo() {
-        return "Result{user='" + user.getUsername() + "', exam='" + test.getName() + 
-               "', score=" + totalScore + "/" + getMaxPossibleScore() + 
-               ", grade=" + getFinalVL() + "}";
+        return percentage;
     }
 }

@@ -3,9 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Interface.java to edit this template
  */
 package com.gamerker.io.e.valua_java.interfaces;
-
 import com.gamerker.io.e.valua_java.mainClasses.Result;
-
 /**
  *
  * @author hp

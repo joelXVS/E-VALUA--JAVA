@@ -4,94 +4,85 @@
  */
 package com.gamerker.io.e.valua_java.controllersPack;
 import com.gamerker.io.e.valua_java.mainClasses.Result;
-import com.itextpdf.text.*;
-import com.itextpdf.text.pdf.PdfPCell;
-import com.itextpdf.text.pdf.PdfPTable;
+import com.gamerker.io.e.valua_java.interfaces.Exportable;
+import com.itextpdf.text.Document;
+import com.itextpdf.text.DocumentException;
+import com.itextpdf.text.Font;
+import com.itextpdf.text.FontFactory;
+import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.PdfWriter;
 import java.io.FileOutputStream;
-import java.time.format.DateTimeFormatter;
+import java.io.IOException;
+import java.nio.file.*;
+import java.util.List;
 /**
  *
  * @author hp
  */
-public class ResultPdfController {   
-    public void generateReport(Result result, String filePath) {
-        Document document = new Document();
-        
+public class ResultPdfController implements Exportable {
+    private static final String DEFAULT_DIR = "resultados_pdf";
+
+    @Override
+    public void exportToPDF(Result result, String filePath) {
         try {
-            PdfWriter.getInstance(document, new FileOutputStream(filePath));
-            document.open();
-            
-            // Title
-            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 18);
-            Paragraph title = new Paragraph("E-valua - Resultados", titleFont);
-            title.setAlignment(Element.ALIGN_CENTER);
-            title.setSpacingAfter(20);
-            document.add(title);
-            
-            // Student Information
-            Font headerFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12);
-            Font normalFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
-            
-                document.add(new Paragraph("Información del Usuario:", headerFont));
-            document.add(new Paragraph("Nombre: " + result.getUser().getUsername(), normalFont));
-            document.add(new Paragraph(" "));
-            
-            // Exam Information
-            document.add(new Paragraph("Información de Prueba:", headerFont));
-            document.add(new Paragraph("Prueba: " + result.getTest().getName(), normalFont));
-            document.add(new Paragraph("Fecha: " + result.getDate().format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")), normalFont));
-            document.add(new Paragraph(" "));
-            
-            // Results Summary
-            document.add(new Paragraph("Resumén de Resultados:", headerFont));
-            document.add(new Paragraph("Puntaje: " + result.getTotalScore() + "/" + result.getMaxPossibleScore(), normalFont));
-            document.add(new Paragraph("Porcentaje: " + String.format("%.1f%%", result.getPercentage()), normalFont));
-            document.add(new Paragraph("Valoración en letras: " + result.getFinalVL(), normalFont));
-            document.add(new Paragraph(" "));
-            
-            // Detailed Results Table
-            document.add(new Paragraph("Resultados Detallados:", headerFont));
-            PdfPTable table = new PdfPTable(3);
-            table.setWidthPercentage(100);
-            
-            // Table headers
-            table.addCell(createCell("Pregunta", headerFont, Element.ALIGN_CENTER));
-            table.addCell(createCell("Puntos obtenidos", headerFont, Element.ALIGN_CENTER));
-            table.addCell(createCell("Resultado", headerFont, Element.ALIGN_CENTER));
-            
-            // Table content
-            int questionNum = 1;
-            for (var entry : result.getAnswers().entrySet()) {
-                table.addCell(createCell("Pregunta " + questionNum, normalFont, Element.ALIGN_LEFT));
-                table.addCell(createCell(String.valueOf(entry.getKey().getPoints()), normalFont, Element.ALIGN_CENTER));
-                table.addCell(createCell(entry.getValue() ? "Correcto" : "Incorrecto", 
-                                       entry.getValue() ? FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.GREEN) 
-                                                       : FontFactory.getFont(FontFactory.HELVETICA_BOLD, 12, BaseColor.RED), 
-                                       Element.ALIGN_CENTER));
-                questionNum++;
+            Path targetPath;
+            if (filePath == null || filePath.isEmpty() || !filePath.toLowerCase().endsWith(".pdf")) {
+                // filePath interpretado como directorio (o usar el directorio por defecto)
+                Path dir = (filePath == null || filePath.isEmpty()) ? Paths.get(DEFAULT_DIR) : Paths.get(filePath);
+                if (!Files.exists(dir)) {
+                    Files.createDirectories(dir);
+                }
+                // construir nombre seguro
+                String safeTest = result.getTestTitle() == null ? "test" :
+                        result.getTestTitle().replaceAll("\\s+", "_").replaceAll("[^a-zA-Z0-9_\\-]", "");
+                String filename = String.format("resultado_%s_%s_%d.pdf",
+                        result.getStudentUsername(), safeTest, System.currentTimeMillis());
+                targetPath = dir.resolve(filename);
+            } else {
+                // filePath es una ruta a .pdf completa
+                targetPath = Paths.get(filePath);
+                Path parent = targetPath.getParent();
+                if (parent != null && !Files.exists(parent)) {
+                    Files.createDirectories(parent);
+                }
             }
-            
-            document.add(table);
-            
-            // Footer
+
+            // Crear documento PDF con iText
+            Document document = new Document();
+            PdfWriter.getInstance(document, new FileOutputStream(targetPath.toFile()));
+            document.open();
+
+            Font titleFont = FontFactory.getFont(FontFactory.HELVETICA_BOLD, 16);
+            Font bodyFont = FontFactory.getFont(FontFactory.HELVETICA, 12);
+
+            document.add(new Paragraph("Resultado de E-valua", titleFont));
             document.add(new Paragraph(" "));
-            Paragraph footer = new Paragraph("Generado por E-valua System", 
-                                           FontFactory.getFont(FontFactory.HELVETICA_OBLIQUE, 10));
-            footer.setAlignment(Element.ALIGN_CENTER);
-            document.add(footer);
-            
-        } catch (Exception e) {
-            System.err.println("Error al crear y generar PDF: " + e.getMessage());
-        } finally {
+
+            document.add(new Paragraph("Estudiante: " + nullSafe(result.getStudentUsername()), bodyFont));
+            document.add(new Paragraph("Prueba: " + nullSafe(result.getTestTitle()), bodyFont));
+            document.add(new Paragraph(String.format("Puntuación: %d/%d (%.2f%%)",
+                    result.getScore(), result.getTotal(), result.getPercentage()), bodyFont));
+            document.add(new Paragraph(" "));
+
+            document.add(new Paragraph("Respuestas:", titleFont));
+            List<String> answers = result.getAnswers();
+            if (answers == null || answers.isEmpty()) {
+                document.add(new Paragraph("No hay respuestas registradas.", bodyFont));
+            } else {
+                for (int i = 0; i < answers.size(); i++) {
+                    document.add(new Paragraph(String.format("%d) %s", i + 1, answers.get(i)), bodyFont));
+                }
+            }
+
             document.close();
+            System.out.println("PDF generado en: " + targetPath.toAbsolutePath().toString());
+        } catch (DocumentException | IOException ex) {
+            System.out.println("Error generando PDF: " + ex.getMessage());
+            ex.printStackTrace();
         }
     }
-    
-    private PdfPCell createCell(String text, Font font, int alignment) {
-        PdfPCell cell = new PdfPCell(new Phrase(text, font));
-        cell.setHorizontalAlignment(alignment);
-        cell.setPadding(5);
-        return cell;
+
+    private String nullSafe(String s) {
+        return s == null ? "" : s;
     }
 }
