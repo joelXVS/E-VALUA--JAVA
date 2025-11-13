@@ -10,10 +10,6 @@ import java.util.*;
  * @author hp
  */
 public class AppController {
-    
-    
-    
-    
     private Scanner scanner = new Scanner(System.in);
     private List<User> users = new ArrayList<>();
     private List<Test> tests = new ArrayList<>();

@@ -3,7 +3,6 @@
  */
 
 package com.gamerker.io.e.valua_java;
-import java.util.Scanner;
 import com.gamerker.io.e.valua_java.controllersPack.AppController;
 /**
  *
