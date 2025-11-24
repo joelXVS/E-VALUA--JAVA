@@ -1,0 +1,273 @@
+[
+  {
+    "title": "Lógica y Pensamiento - Nivel 1",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "Si todos los gatos son mamíferos y algunos mamíferos son blancos, ¿podemos afirmar que algunos gatos son blancos?",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "Sí, necesariamente",
+          "No, no se puede afirmar",
+          "Solo si el gato es doméstico",
+          "Depende del color del pelaje"
+        ]
+      },
+      {
+        "questionText": "En la secuencia: 2, 4, 8, 16, ¿cuál es el siguiente número?",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "20",
+          "24",
+          "32",
+          "64"
+        ]
+      },
+      {
+        "questionText": "El opuesto lógico de \u0027Si estudio, apruebo\u0027 es:",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "No estudio y apruebo",
+          "Estudio y no apruebo",
+          "No estudio y no apruebo",
+          "Si no apruebo, no estudié"
+        ]
+      },
+      {
+        "questionText": "Identifique el patrón: A, C, E, G, ?",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "H",
+          "I",
+          "J",
+          "K"
+        ]
+      },
+      {
+        "questionText": "Si Pedro es mayor que Juan y Juan es mayor que Ana, ¿quién es el menor?",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "Pedro",
+          "Juan",
+          "Ana",
+          "No se puede determinar"
+        ]
+      },
+      {
+        "questionText": "¿Cuál de estas proposiciones es una tautología?",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "p ∧ ¬p",
+          "p ∨ ¬p",
+          "p → p",
+          "p ↔ ¬p"
+        ]
+      },
+      {
+        "questionText": "Si hoy es martes, ¿qué día será dentro de 100 días?",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "Miércoles",
+          "Jueves",
+          "Viernes",
+          "Sábado"
+        ]
+      },
+      {
+        "questionText": "Si ¬(p ∧ q) es verdadero, ¿qué podemos deducir?",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "p es verdadero y q es falso",
+          "Al menos una de p o q es falsa",
+          "Ambas son falsas",
+          "Ambas son verdaderas"
+        ]
+      },
+      {
+        "questionText": "La negación de (p → q) es equivalente a:",
+        "type": "logic",
+        "correctAnswer": "A",
+        "options": [
+          "p ∧ ¬q",
+          "¬p ∨ q",
+          "¬p ∧ q",
+          "p ∨ ¬q"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es una falacia lógica común?",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "Silogismo categórico",
+          "Ad hominem",
+          "Modus ponens",
+          "Reducción al absurdo"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Matemáticas - Nivel 3",
+    "price": 6000.0,
+    "questions": [
+      {
+        "questionText": "Si f(x) \u003d x², entonces f\u0027(3) \u003d",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "3",
+          "6",
+          "9",
+          "12"
+        ]
+      },
+      {
+        "questionText": "Si g(x) \u003d 2x + 1, entonces g(5) \u003d",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "9",
+          "10",
+          "11",
+          "12"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es el área de un círculo con radio 3? (π ≈ 3.14)",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "18.84",
+          "28.26",
+          "28.27",
+          "9.42"
+        ]
+      },
+      {
+        "questionText": "10% de 200 es igual a:",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "10",
+          "20",
+          "30",
+          "200"
+        ]
+      },
+      {
+        "questionText": "La ecuación de la recta con pendiente 2 que pasa por (0,1) es:",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "y \u003d 2x",
+          "y \u003d 2x + 1",
+          "y \u003d x + 2",
+          "y \u003d 1x + 2"
+        ]
+      },
+      {
+        "questionText": "log₁₀(1000) \u003d",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "2",
+          "3",
+          "4",
+          "10"
+        ]
+      },
+      {
+        "questionText": "√81 \u003d",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "7",
+          "8",
+          "9",
+          "10"
+        ]
+      },
+      {
+        "questionText": "6! (factorial de 6) \u003d",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "120",
+          "360",
+          "720",
+          "5040"
+        ]
+      },
+      {
+        "questionText": "3⁴ \u003d",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "9",
+          "27",
+          "81",
+          "243"
+        ]
+      },
+      {
+        "questionText": "La derivada de sin(x) es:",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "-sin(x)",
+          "cos(x)",
+          "-cos(x)",
+          "sin(x)"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Razonamiento Verbal - Nivel 2",
+    "price": 5500.0,
+    "questions": [
+      {
+        "questionText": "Antónimo de \u0027efímero\u0027:",
+        "type": "verbal",
+        "correctAnswer": "B",
+        "options": [
+          "Temporal",
+          "Duradero",
+          "Pasajero",
+          "Breve"
+        ]
+      },
+      {
+        "questionText": "Sinónimo de \u0027inefable\u0027:",
+        "type": "verbal",
+        "correctAnswer": "B",
+        "options": [
+          "Decible",
+          "Indecible",
+          "Habladora",
+          "Expresivo"
+        ]
+      },
+      {
+        "questionText": "Completa: El médico ______ al paciente con cuidado.",
+        "type": "verbal",
+        "correctAnswer": "A",
+        "options": [
+          "examinó",
+          "examino",
+          "examina",
+          "examinará"
+        ]
+      }
+    ]
+  }
+]

@@ -7,11 +7,18 @@ package com.gamerker.io.e.valua_java.mainClasses;
  *
  * @author hp
  */
+/**
+ * representa un usuario administrador
+ * rol con permisos completos sobre el sistema
+ */
 public class Admin extends User {
+    
+    // constructor que inicializa username y nombre visible
     public Admin(String username, String displayName) {
         super(username, displayName);
     }
 
+    // devuelve el rol especifico
     @Override
     public String getRole() { return "admin"; }
 }

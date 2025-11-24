@@ -8,6 +8,10 @@ import com.gamerker.io.e.valua_java.mainClasses.Result;
  *
  * @author hp
  */
+/**
+ * interfaz para clases que pueden exportar resultados a pdf
+ */
 public interface Exportable {
+    // metodo que debe implementar para exportar un resultado a archivo pdf
     void exportToPDF(Result result, String filePath);
 }

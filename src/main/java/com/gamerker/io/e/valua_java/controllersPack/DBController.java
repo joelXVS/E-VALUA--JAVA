@@ -1,213 +1,230 @@
 /*
  * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.controllersPack;
 import com.gamerker.io.e.valua_java.mainClasses.*;
-import com.gamerker.io.e.valua_java.interfaces.*;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
-import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
+import com.gamerker.io.e.valua_java.utils.*;
+import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
+
 import java.io.*;
-import java.lang.reflect.Type;
 import java.nio.file.*;
 import java.util.*;
-import java.nio.charset.StandardCharsets;
+import java.lang.reflect.Type;
+import java.time.LocalDateTime;
 /**
  *
  * @author hp
  */
-public class DBController implements Manageable {
-    private final Gson gson = new GsonBuilder().setPrettyPrinting().create();
+/**
+ * controlador de base de datos (archivos JSON)
+ * maneja carga y guardado de usuarios, pruebas, resultados, transacciones y tarjetas
+ */
+public class DBController {
 
-    private final String usersFile = "users.json";
-    private final String testsFile = "tests.json";
-    private final String resultsFile = "results.json";
+    private static final String DATA_DIR = "data";
+    private static final Gson gson = new GsonBuilder()
+        .setPrettyPrinting()
+        .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
+        .registerTypeAdapter(Question.class, new QuestionDeserializer())
+        .create();
 
-    // ----------------- GUARDAR -----------------
-    public void saveAll(List<User> users, List<Test> tests, List<Result> results) {
-        saveUsers(users, usersFile);
-        saveTests(tests, testsFile);
-        saveResults(results, resultsFile);
-    }
-
-    private void saveUsers(List<User> users, String filename) {
-        JsonArray arr = new JsonArray();
-        for (User u : users) {
-            JsonObject o = new JsonObject();
-            o.addProperty("username", u.getUsername());
-            o.addProperty("displayName", u.getDisplayName());
-            o.addProperty("role", u.getRole());
-            arr.add(o);
-        }
-        writeJsonToFile(arr, filename);
-    }
-
-    private void saveTests(List<Test> tests, String filename) {
-        JsonArray arr = new JsonArray();
-        for (Test t : tests) {
-            JsonObject to = new JsonObject();
-            to.addProperty("title", t.getTitle());
-            // si tienes campo createdBy, agrégalo: to.addProperty("createdBy", t.getCreatedBy());
-            JsonArray qarr = new JsonArray();
-            if (t.getQuestions() != null) {
-                for (Question q : t.getQuestions()) {
-                    JsonObject qo = new JsonObject();
-                    qo.addProperty("questionText", q.getQuestionText());
-                    qo.addProperty("correctAnswer", q.getCorrectAnswer());
-                    if (q instanceof MathQuestion) qo.addProperty("type", "math");
-                    else if (q instanceof LogicQuestion) qo.addProperty("type", "logic");
-                    else qo.addProperty("type", "unknown");
-                    qarr.add(qo);
-                }
-            }
-            to.add("questions", qarr);
-            arr.add(to);
-        }
-        writeJsonToFile(arr, filename);
-    }
-
-    private void saveResults(List<Result> results, String filename) {
-        JsonArray arr = new JsonArray();
-        for (Result r : results) {
-            JsonObject ro = new JsonObject();
-            ro.addProperty("studentUsername", r.getStudentUsername());
-            ro.addProperty("testTitle", r.getTestTitle());
-            JsonArray ans = new JsonArray();
-
-            for (String a : r.getAnswers()) {
-                JsonObject obj = new JsonObject();
-                obj.addProperty("id", r.getAnswers().indexOf(a));
-                obj.addProperty("userAnswer", a);
-                ans.add(obj);
-            }
-
-            ro.add("answers", ans);
-            arr.add(ro);
-        }
-        writeJsonToFile(arr, filename);
-    }
-
-    private void writeJsonToFile(JsonElement json, String filename) {
-        try (Writer writer = Files.newBufferedWriter(Paths.get(filename), StandardCharsets.UTF_8)) {
-            gson.toJson(json, writer);
-            System.out.println("Datos guardados en " + filename);
+    static {
+        try {
+            Files.createDirectories(Paths.get(DATA_DIR));
         } catch (IOException e) {
-            System.out.println("Error al guardar " + filename + ": " + e.getMessage());
+            System.err.println("No se pudo crear directorio 'data': " + e.getMessage());
         }
     }
 
-    // ----------------- CARGAR -----------------
+    // ====================== USUARIOS ======================
     public List<User> loadUsers() {
-        JsonElement root = readJsonFromFileOrResource(usersFile);
-        List<User> out = new ArrayList<>();
-        if (root == null || !root.isJsonArray()) return out;
-        JsonArray arr = root.getAsJsonArray();
-        for (JsonElement e : arr) {
-            JsonObject o = e.getAsJsonObject();
-            String role = o.has("role") ? o.get("role").getAsString() : "student";
-            String username = o.has("username") ? o.get("username").getAsString() : "";
-            String display = o.has("displayName") ? o.get("displayName").getAsString() : username;
-            switch (role.toLowerCase()) {
-                case "teacher": out.add(new Teacher(username, display)); break;
-                case "admin": out.add(new Admin(username, display)); break;
-                default: out.add(new Student(username, display)); break;
-            }
-        }
-        System.out.println("Usuarios cargados: " + out.size());
-        return out;
+        return loadList("users.json", new TypeToken<List<User>>() {}.getType());
     }
 
+    public void saveUsers(List<User> users) {
+        List<UserJsonWrapper> wrappers = users.stream()
+                .map(u -> new UserJsonWrapper(u.getRole(), u.getUsername(), u.getDisplayName(),
+                        u.getBalance(), u.getPasswordHash()))
+                .toList();
+        saveList(wrappers, "users.json");
+    }
+
+    // ====================== PRUEBAS ======================
     public List<Test> loadTests() {
-        JsonElement root = readJsonFromFileOrResource(testsFile);
-        List<Test> out = new ArrayList<>();
-        if (root == null || !root.isJsonArray()) return out;
-        JsonArray arr = root.getAsJsonArray();
-        for (JsonElement e : arr) {
-            JsonObject o = e.getAsJsonObject();
-            String title = o.has("title") ? o.get("title").getAsString() : "Sin título";
-            Test t = new Test(title);
-            if (o.has("questions") && o.get("questions").isJsonArray()) {
-                for (JsonElement qe : o.get("questions").getAsJsonArray()) {
-                    JsonObject qo = qe.getAsJsonObject();
-                    String qtext = qo.has("questionText") ? qo.get("questionText").getAsString() : "";
-                    String correct = qo.has("correctAnswer") ? qo.get("correctAnswer").getAsString() : "";
-                    String type = qo.has("type") ? qo.get("type").getAsString() : "logic";
-                    Question q;
-                    if ("math".equalsIgnoreCase(type)) q = new MathQuestion(qtext, correct);
-                    else q = new LogicQuestion(qtext, correct);
-                    t.addQuestion(q);
-                }
-            }
-            out.add(t);
+        String json = readFile("tests.json");
+        if (json == null || json.trim().isEmpty()) {
+            System.out.println("No se encontraron pruebas. Se creará archivo vacío.");
+            return new ArrayList<>();
         }
-        System.out.println("Pruebas cargadas: " + out.size());
-        return out;
+
+        try {
+            JsonArray array = JsonParser.parseString(json).getAsJsonArray();
+            List<Test> tests = new ArrayList<>();
+
+            for (JsonElement elem : array) {
+                JsonObject obj = elem.getAsJsonObject();
+                String title = obj.get("title").getAsString();
+                double price = obj.has("price") ? obj.get("price").getAsDouble() : 5000.0;
+
+                Test test = new Test(title);
+                test.setPrice(price);
+
+                JsonArray questions = obj.getAsJsonArray("questions");
+                for (JsonElement qElem : questions) {
+                    JsonObject qObj = qElem.getAsJsonObject();
+                    String text = qObj.get("questionText").getAsString();
+                    String type = qObj.has("type") ? qObj.get("type").getAsString() : "unknown";
+
+                    JsonArray optsArray = qObj.getAsJsonArray("options");
+                    List<String> options = new ArrayList<>();
+                    for (JsonElement opt : optsArray) {
+                        options.add(opt.getAsString());
+                    }
+
+                    String correct = qObj.get("correctAnswer").getAsString().toUpperCase();
+
+                    Question q = new MultipleChoiceQuestion(text, options, correct, type);
+                    test.addQuestion(q);
+                }
+                tests.add(test);
+            }
+            return tests;
+
+        } catch (Exception e) {
+            System.err.println("Error cargando pruebas: " + e.getMessage());
+            e.printStackTrace();
+            return new ArrayList<>();
+        }
     }
 
+    public void saveTests(List<Test> tests) {
+        JsonArray array = new JsonArray();
+        for (Test t : tests) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("title", t.getTitle());
+            obj.addProperty("price", t.getPrice());
+
+            JsonArray questions = new JsonArray();
+            for (Question q : t.getQuestions()) {
+                JsonObject qObj = new JsonObject();
+                qObj.addProperty("questionText", q.getQuestionText());
+                qObj.addProperty("type", q.getType());
+                qObj.addProperty("correctAnswer", q.getCorrectAnswer());
+
+                JsonArray opts = new JsonArray();
+                for (String opt : q.getOptions()) {
+                    opts.add(opt);
+                }
+                qObj.add("options", opts);
+                questions.add(qObj);
+            }
+            obj.add("questions", questions);
+            array.add(obj);
+        }
+        writeFile("tests.json", gson.toJson(array));
+    }
+
+    // ====================== RESULTADOS ======================
     public List<Result> loadResults() {
-        JsonElement root = readJsonFromFileOrResource(resultsFile);
-        List<Result> out = new ArrayList<>();
-        if (root == null || !root.isJsonArray()) return out;
-        JsonArray arr = root.getAsJsonArray();
-        for (JsonElement e : arr) {
-            JsonObject o = e.getAsJsonObject();
-            String student = o.has("studentUsername") ? o.get("studentUsername").getAsString() : "";
-            String testTitle = o.has("testTitle") ? o.get("testTitle").getAsString() : "";
-            int score = o.has("score") ? o.get("score").getAsInt() : 0;
-            int total = o.has("total") ? o.get("total").getAsInt() : 0;
-            double percentage = o.has("percentage") ? o.get("percentage").getAsDouble() : 0.0;
-            List<String> answers = new ArrayList<>();
-            if (o.has("answers") && o.get("answers").isJsonArray()) {
-                for (JsonElement ae : o.get("answers").getAsJsonArray()) answers.add(ae.getAsString());
-            }
-            Result r = new Result(student, testTitle, score, total, percentage, answers);
-            out.add(r);
-        }
-        System.out.println("Resultados cargados: " + out.size());
-        return out;
+        return loadList("results.json", new TypeToken<List<Result>>() {}.getType());
     }
 
-    // ----------------- UTIL -----------------
-    private JsonElement readJsonFromFileOrResource(String filename) {
-        // 1) intenta desde working directory (ruta relativa)
-        Path p = Paths.get(filename);
-        if (Files.exists(p)) {
-            try (Reader r = Files.newBufferedReader(p, StandardCharsets.UTF_8)) {
-                return JsonParser.parseReader(r);
-            } catch (IOException ex) {
-                System.out.println("Error leyendo " + filename + " desde ruta: " + ex.getMessage());
-            }
-        }
-
-        // 2) fallback: intentar cargar como recurso del classpath (p. ej. si está en src o dentro del JAR)
-        try (InputStream is = getClass().getResourceAsStream("/com/gamerker/io/e/valua_java/" + filename)) {
-            if (is != null) {
-                try (Reader r = new InputStreamReader(is, StandardCharsets.UTF_8)) {
-                    return JsonParser.parseReader(r);
-                }
-            }
-        } catch (Exception ex) {
-            // noop
-        }
-
-        // 3) no existe
-        System.out.println("No se encontró " + filename + " (vía ruta relativa ni recurso de clase).");
-        return null;
+    public void saveResults(List<Result> results) {
+        saveList(results, "results.json");
     }
 
-    // Métodos legacy para Manageable (compatibilidad)
-    @Override
-    public void saveToFile(List<User> users, String filename) {
-        saveUsers(users, filename);
+    // ====================== TRANSACCIONES ======================
+    public List<Transaction> loadTransactions() {
+        return loadList("transactions.json", new TypeToken<List<Transaction>>() {}.getType());
     }
 
-    @Override
-    public List<User> loadFromFile(String filename) {
-        return loadUsers();
+    public void saveTransactions(List<Transaction> transactions) {
+        saveList(transactions, "transactions.json");
+    }
+
+    // ====================== TARJETAS DE RECARGA ======================
+    public List<RechargeCard> loadCards() {
+        return loadList("cards.json", new TypeToken<List<RechargeCard>>() {}.getType());
+    }
+
+    public void saveCards(List<RechargeCard> cards) {
+        saveList(cards, "cards.json");
+    }
+
+    // ====================== MÉTODOS GENÉRICOS ======================
+    private String readFile(String filename) {
+        try {
+            Path path = Paths.get(DATA_DIR, filename);
+            if (!Files.exists(path)) {
+                Files.createFile(path);
+                return "[]";
+            }
+            return Files.readString(path);
+        } catch (Exception e) {
+            System.err.println("Error leyendo " + filename + ": " + e.getMessage());
+            return null;
+        }
+    }
+
+    private void writeFile(String filename, String content) {
+        try {
+            Path path = Paths.get(DATA_DIR, filename);
+            Files.writeString(path, content, StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+        } catch (Exception e) {
+            System.err.println("Error escribiendo " + filename + ": " + e.getMessage());
+        }
+    }
+
+    private <T> List<T> loadList(String filename, Type type) {
+        String json = readFile(filename);
+        if (json == null || json.trim().isEmpty() || "null".equals(json)) {
+            return new ArrayList<>();
+        }
+        try {
+            return gson.fromJson(json, type);
+        } catch (Exception e) {
+            System.err.println("Error parseando " + filename + ": " + e.getMessage());
+            return new ArrayList<>();
+        }
+    }
+
+    private void saveList(Object list, String filename) {
+        writeFile(filename, gson.toJson(list));
+    }
+
+    // ====================== CLASES INTERNAS ======================
+    private static class UserJsonWrapper {
+        String role, username, displayName, passwordHash;
+        double balance;
+
+        UserJsonWrapper(String role, String username, String displayName, double balance, String passwordHash) {
+            this.role = role;
+            this.username = username;
+            this.displayName = displayName;
+            this.balance = balance;
+            this.passwordHash = passwordHash;
+        }
+
+        String toUserLine() {
+            return String.format("%s|%s|%s|%.2f|%s", role, username, displayName, balance, passwordHash != null ? passwordHash : "");
+        }
+    }
+
+    // Necesario porque Question es abstracta
+    private static class QuestionDeserializer implements JsonDeserializer<Question> {
+        @Override
+        public Question deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) {
+            JsonObject obj = json.getAsJsonObject();
+            String text = obj.get("questionText").getAsString();
+            String type = obj.has("type") ? obj.get("type").getAsString() : "unknown";
+            String correct = obj.get("correctAnswer").getAsString().toUpperCase();
+
+            JsonArray opts = obj.getAsJsonArray("options");
+            List<String> options = new ArrayList<>();
+            for (JsonElement e : opts) options.add(e.getAsString());
+
+            return new MultipleChoiceQuestion(text, options, correct, type);
+        }
     }
 }

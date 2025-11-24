@@ -8,6 +8,10 @@ import java.util.*;
  *
  * @author hp
  */
+/**
+ * almacena el resultado de una prueba realizada por un estudiante
+ * incluye puntuacion, respuestas y metodos para mostrar resumen
+ */
 public class Result {
     private String studentUsername;
     private String testTitle;
@@ -16,6 +20,7 @@ public class Result {
     private double percentage;
     private List<String> answers;
 
+    // constructor que inicializa todos los campos
     public Result(String studentUsername, String testTitle, int score, int total, double percentage, List<String> answers) {
         this.studentUsername = studentUsername;
         this.testTitle = testTitle;
@@ -25,36 +30,34 @@ public class Result {
         this.answers = new ArrayList<>(answers);
     }
 
+    // getters para acceder a los campos
     public String getStudentUsername() { return studentUsername; }
     public String getTestTitle() { return testTitle; }
+    public List<String> getAnswers() { return answers; }
+    public int getScore() { return score; }
+    public int getTotal() { return total; }
+    public double getPercentage() { return percentage; }
 
+    /**
+     * devuelve resumen compacto del resultado
+     * formato: usuario - prueba: puntaje/total (porcentaje%)
+     */
     public String summary() {
         return String.format("%s - %s: %d/%d (%.2f%%)", studentUsername, testTitle, score, total, percentage);
     }
 
+    /**
+     * devuelve detalle completo del resultado
+     * incluye todas las respuestas del estudiante
+     */
     public String detailed() {
         StringBuilder sb = new StringBuilder();
-        sb.append(String.format("Estudiante: %s%nPrueba: %s%nPuntuación: %d/%d (%.2f%%)%n", studentUsername, testTitle, score, total, percentage));
+        sb.append(String.format("Estudiante: %s%nPrueba: %s%nPuntuacion: %d/%d (%.2f%%)%n", 
+            studentUsername, testTitle, score, total, percentage));
         sb.append("Respuestas del estudiante:\n");
-        for (int i=0;i<answers.size();i++) {
-            sb.append(String.format("%d) %s%n", i+1, answers.get(i)));
+        for (int i = 0; i < answers.size(); i++) {
+            sb.append(String.format("%d) %s%n", i + 1, answers.get(i)));
         }
         return sb.toString();
-    }
-
-    public List<String> getAnswers() {
-        return answers;
-    }
-
-    public int getScore() {
-        return score;
-    }
-
-    public int getTotal() {
-        return total;
-    }
-
-    public double getPercentage() {
-        return percentage;
     }
 }

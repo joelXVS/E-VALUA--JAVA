@@ -9,7 +9,13 @@ import com.gamerker.io.e.valua_java.mainClasses.*;
  *
  * @author hp
  */
+/**
+ * interfaz para clases que gestionan persistencia de usuarios
+ */
 public interface Manageable {
+    // guarda lista de usuarios en archivo
     void saveToFile(List<User> users, String filename);
-    java.util.List<User> loadFromFile(String filename);
+    
+    // carga lista de usuarios desde archivo
+    List<User> loadFromFile(String filename);
 }

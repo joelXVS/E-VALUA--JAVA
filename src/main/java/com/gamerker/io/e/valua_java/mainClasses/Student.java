@@ -7,11 +7,18 @@ package com.gamerker.io.e.valua_java.mainClasses;
  *
  * @author hp
  */
+/**
+ * representa un usuario estudiante
+ * rol especifico con permisos limitados
+ */
 public class Student extends User {
+    
+    // constructor que inicializa username y nombre visible
     public Student(String username, String displayName) {
         super(username, displayName);
     }
 
+    // devuelve el rol especifico
     @Override
     public String getRole() { return "student"; }
 }
