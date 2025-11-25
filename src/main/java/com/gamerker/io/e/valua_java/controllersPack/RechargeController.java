@@ -82,12 +82,19 @@ public class RechargeController {
 
     public static String getBalanceStatus(User user) {
         double balance = user.getBalance();
-        if (balance >= 0) {
-            return String.format("Saldo: $%,.0f", balance);
+        double credit = "student".equals(user.getRole()) ? 10000.0 : 50000.0;
+        double available = balance + credit;
+
+        if (balance < 0) {
+            return String.format("SALDO NEGATIVO: -$%,.0f | Crédito disponible: $%,.0f | " +
+                               "DEBES RECARGAR PARA CONTINUAR", 
+                               Math.abs(balance), credit);
+        } else if (available < 5000) { // Si el saldo es bajo
+            return String.format("Saldo: $%,.0f | Crédito disponible: $%,.0f | " +
+                               "Considere recargar pronto", balance, credit);
         } else {
-            double available = getAvailableBalance(user);
-            return String.format("Saldo: -$%,.0f (Disponible con crédito: $%,.0f)",
-                    Math.abs(balance), available);
+            return String.format("Saldo: $%,.0f | Crédito disponible: $%,.0f", 
+                               balance, credit);
         }
     }
     
@@ -100,9 +107,14 @@ public class RechargeController {
 
         // Usamos el constructor especial que permite formato libre
         RechargeCard welcomeCard = new RechargeCard(number, 5000.0, true); 
+        // Asegurar que la tarjeta se marque como usada INMEDIATAMENTE
         welcomeCard.markAsUsed(user.getUsername());
         cards.add(welcomeCard);
         saveCards();
+
+        // LOG para verificar
+        System.out.println("Tarjeta de bienvenida generada: " + welcomeCard.getCardNumber() + 
+                           " para usuario: " + user.getUsername());
         return welcomeCard;
     }
 }

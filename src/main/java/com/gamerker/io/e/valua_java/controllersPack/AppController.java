@@ -4,7 +4,15 @@
  */
 package com.gamerker.io.e.valua_java.controllersPack;
 import com.gamerker.io.e.valua_java.mainClasses.*;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
+import com.google.gson.Gson;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.ChronoUnit;
+import java.io.IOException;
 import java.util.*;
 /**
  *
@@ -27,10 +35,82 @@ public class AppController {
     private List<Transaction> transactions;
     private User currentUser = null;
     
-    private Test selectedTest;
-
+    // Persistencia de sesión
+    private static final String SESSION_FILE = "data/session.json";
+    
     public AppController() {
-        loadAllData();
+        try {
+            loadAllData();
+            currentUser = loadActiveSession();
+        } catch (Exception e) {
+            System.err.println("\nERROR CRÍTICO AL CARGAR DATOS: " + e.getMessage());
+            System.err.println("Esto suele ocurrir si un archivo JSON está corrupto o mal formateado.");
+
+            // Identificar archivo específico
+            if (e.getMessage().contains("users.json")) {
+                System.err.println("\nEl archivo users.json está corrupto o incompleto.");
+                System.err.println("¿Deseas intentar recuperarlo? (s/n): ");
+
+                Scanner scanner = new Scanner(System.in);
+                String response = scanner.nextLine().trim().toLowerCase();
+
+                if (response.equals("s")) {
+                    db.recoverCorruptedFile("users.json");
+                    System.out.println("\nReintentando carga de datos...");
+                    loadAllData(); // Reintentar
+                } else {
+                    System.err.println("No se pudo iniciar el sistema. Saliendo...");
+                    System.exit(1);
+                }
+            }
+        }
+    }
+    
+    // ========== MANEJO DE SESIÓN ==========
+    // Cargar sesión activa
+    private User loadActiveSession() {
+        try {
+            String json = new String(Files.readAllBytes(Paths.get(SESSION_FILE)));
+            JsonObject session = JsonParser.parseString(json).getAsJsonObject();
+            String username = session.get("activeUsername").getAsString();
+
+            // Verificar que la sesión no haya expirado (máximo 24 horas)
+            LocalDateTime lastActivity = LocalDateTime.parse(session.get("lastActivity").getAsString());
+            if (ChronoUnit.HOURS.between(lastActivity, LocalDateTime.now()) > 24) {
+                Files.deleteIfExists(Paths.get(SESSION_FILE));
+                return null;
+            }
+
+            return users.stream()
+                       .filter(u -> u.getUsername().equals(username))
+                       .findFirst()
+                       .orElse(null);
+        } catch (Exception e) {
+            return null; // No hay sesión activa
+        }
+    }
+
+    // Guardar sesión activa
+    private void saveActiveSession() {
+        try {
+            JsonObject session = new JsonObject();
+            session.addProperty("activeUsername", currentUser.getUsername());
+            session.addProperty("sessionStart", LocalDateTime.now().toString());
+            session.addProperty("lastActivity", LocalDateTime.now().toString());
+            Files.writeString(Paths.get(SESSION_FILE), new Gson().toJson(session));
+        } catch (Exception e) {
+            System.err.println("Error guardando sesión: " + e.getMessage());
+        }
+    }
+
+    // Limpiar sesión al cerrar sesión
+    private void clearActiveSession() {
+        try {
+            Files.deleteIfExists(Paths.get(SESSION_FILE));
+            loginMenu();
+        } catch (Exception e) {
+            // Ignorar error
+        }
     }
 
     public void run() {
@@ -39,6 +119,18 @@ public class AppController {
             |          BIENVENIDO A E-VALUA        |
             |======================================|
             """);
+
+        // Si hay sesión activa, saltar login
+        if (currentUser != null) {
+            System.out.println("\nSesión activa detectada para: " + currentUser.getDisplayName());
+            System.out.println("Última actividad: " + LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+            System.out.println("Presione Enter para continuar o 'n' para cerrar sesión...");
+            String option = scanner.nextLine().trim().toLowerCase();
+            if (option.equals("n")) {
+                clearActiveSession();
+                currentUser = null;
+            }
+        }
 
         while (true) {
             if (currentUser == null) {
@@ -57,7 +149,7 @@ public class AppController {
     }
     
     private void registerNewUser() {
-        System.out.print("Rol (student/teacher/admin) [student]: ");
+        System.out.print("Rol (student/teacher/admin) [Deje vacío para Estudiante]: ");
         String role = scanner.nextLine().trim().toLowerCase();
         if (role.isEmpty()) role = "student";
 
@@ -93,7 +185,7 @@ public class AppController {
             newUser.setPassword(password);
         }
 
-        // === AQUÍ ESTÁ LA MAGIA: TARJETA DE BIENVENIDA ===
+        // === TARJETA DE BIENVENIDA ===
         RechargeCard welcomeCard = recharge.generateWelcomeCard(newUser);
 
         // Aplicar el saldo de la tarjeta al usuario
@@ -133,11 +225,11 @@ public class AppController {
 
                 if (currentUser != null) {
                     System.out.println("\n¡Bienvenido, " + currentUser.getDisplayName() + "!");
-                    userMenu();
+                    saveActiveSession(); // Guardamos sesión al iniciar
                     return;
+                } else {
+                    System.out.println("Credenciales incorrectas.");
                 }
-                
-                System.out.println("Credenciales incorrectas.");
             }
             case "2" -> registerNewUser(); 
             case "3" -> {
@@ -150,6 +242,13 @@ public class AppController {
 
     private void userMenu() {
         while (true) {
+            // Verificar saldo negativo al inicio del menú
+            if (currentUser.getBalance() < -1000) { // Umbral configurable
+                System.out.println("\nADVERTENCIA: TU SALDO ES MUY NEGATIVO");
+                System.out.printf("Deuda actual: -$%,.0f%n", Math.abs(currentUser.getBalance()));
+                System.out.println("No puedes realizar pruebas hasta recargar saldo.\n");
+            }
+
             System.out.println("\n=== Menú Principal - " + currentUser.getDisplayName() + " ===");
             System.out.println(RechargeController.getBalanceStatus(currentUser));
 
@@ -179,6 +278,11 @@ public class AppController {
             String opt = scanner.nextLine().trim();
 
             switch (opt) {
+                case "0" -> {
+                    System.out.println("Sesión cerrada.");
+                    clearActiveSession();
+                    return;
+                }
                 case "1" -> listTests();
                 case "2" -> {
                     if (canTakeTest()) {
@@ -208,12 +312,6 @@ public class AppController {
                         System.out.println("Opción no válida.");
                     }
                 }
-
-                case "0" -> {
-                    System.out.println("Sesión cerrada.");
-                    return;
-                }
-
                 default -> System.out.println("Opción no válida. Intenta de nuevo.");
             }
         }
@@ -257,41 +355,7 @@ public class AppController {
             return false;
         }
 
-        System.out.println("\n=== PRUEBAS DISPONIBLES ===");
-        for (int i = 0; i < tests.size(); i++) {
-            Test t = tests.get(i);
-            System.out.printf("%d. %s - Precio: $%,.0f%n", i + 1, t.getTitle(), t.getPrice());
-        }
-
-        System.out.print("Seleccione número de prueba: ");
-        String input = scanner.nextLine().trim();
-        if (input.isEmpty()) return false;
-
-        int index;
-        try {
-            index = Integer.parseInt(input) - 1;
-            if (index < 0 || index >= tests.size()) {
-                System.out.println("Número inválido.");
-                return false;
-            }
-        } catch (NumberFormatException e) {
-            System.out.println("Entrada inválida.");
-            return false;
-        }
-
-        selectedTest = tests.get(index);  // ← Asegúrate de tener esta variable de instancia
-
-        double price = selectedTest.getPrice();
-        double available = RechargeController.getAvailableBalance(currentUser);
-
-        if (available < price) {
-            return false; // ← Aquí se bloquea
-        }
-
-        System.out.printf("%nIniciando prueba: %s%n", selectedTest.getTitle());
-        System.out.printf("Precio: $%,.0f%n", price);
-        System.out.print("¿Confirmar? (s/n): ");
-        return scanner.nextLine().trim().equalsIgnoreCase("s");
+        return true;
     }
 
     private void takeTest() {
@@ -309,9 +373,19 @@ public class AppController {
             }
 
             Test test = tests.get(idx);
+            double testPrice = test.getPrice();
 
-            // Verificar saldo
-            if (!RechargeController.hasSufficientBalance(currentUser, test.getPrice())) {
+            // Verificar saldo real negativo
+            if (currentUser.getBalance() < 0) {
+                System.out.println("\nSALDO NEGATIVO DETECTADO");
+                System.out.printf("Tu saldo actual es: -$%,.0f%n", Math.abs(currentUser.getBalance()));
+                System.out.println("No puedes realizar más pruebas hasta recargar saldo.");
+                System.out.println("Por favor, dirígete al menú de recarga (opción 4).");
+                return; // Bloquear acceso
+            }
+
+            // Verificar saldo suficiente (incluyendo crédito)
+            if (!RechargeController.hasSufficientBalance(currentUser, testPrice)) {
                 System.out.println("\nSALDO INSUFICIENTE para realizar esta prueba.");
                 System.out.println(RechargeController.getBalanceStatus(currentUser));
                 System.out.println("Debe recargar antes de continuar.");
@@ -631,9 +705,9 @@ public class AppController {
     // Utilidades para el ranking
     private String getPositionSuffix(int position) {
         return switch (position) {
-            case 1 -> "º";
-            case 2 -> "º";
-            case 3 -> "º";
+            case 1 -> "er";
+            case 2 -> "do";
+            case 3 -> "er";
             default -> "º";
         };
     }

@@ -44,6 +44,10 @@ public abstract class User {
             transactions.add(t);
             if ("CHARGE".equals(t.getType())) {
                 balance -= t.getAmount();
+                // Alerta si el saldo se vuelve muy negativo
+                if (balance < -50000) {
+                    System.err.println("ALERTA: Usuario " + username + " tiene saldo muy negativo: " + balance);
+                }
             } else if ("PAYMENT".equals(t.getType())) {
                 balance += t.getAmount();
             }

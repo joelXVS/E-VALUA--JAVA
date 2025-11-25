@@ -12,6 +12,12 @@ import java.nio.file.*;
 import java.util.*;
 import java.lang.reflect.Type;
 import java.time.LocalDateTime;
+
+import com.google.gson.JsonDeserializationContext;
+import com.google.gson.JsonDeserializer;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParseException;
+import java.lang.reflect.Type;
 /**
  *
  * @author hp
@@ -27,6 +33,7 @@ public class DBController {
         .setPrettyPrinting()
         .registerTypeAdapter(LocalDateTime.class, new LocalDateTimeAdapter())
         .registerTypeAdapter(Question.class, new QuestionDeserializer())
+        .registerTypeAdapter(User.class, new UserDeserializer()) // NUEVA LÍNEA
         .create();
 
     static {
@@ -34,6 +41,40 @@ public class DBController {
             Files.createDirectories(Paths.get(DATA_DIR));
         } catch (IOException e) {
             System.err.println("No se pudo crear directorio 'data': " + e.getMessage());
+        }
+    }
+    
+    // ====================== CLASE INTERNA PARA DESERIALIZAR USUARIOS ======================
+    private static class UserDeserializer implements JsonDeserializer<User> {
+        @Override
+        public User deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
+            JsonObject jsonObject = json.getAsJsonObject();
+            String role = jsonObject.get("role").getAsString().toLowerCase();
+
+            // Extraer campos comunes
+            String username = jsonObject.get("username").getAsString();
+            String displayName = jsonObject.get("displayName").getAsString();
+            double balance = jsonObject.get("balance").getAsDouble();
+            String passwordHash = jsonObject.has("passwordHash") ? jsonObject.get("passwordHash").getAsString() : "";
+
+            // Crear instancia según el rol
+            User user;
+            switch (role) {
+                case "admin":
+                    user = new Admin(username, displayName);
+                    break;
+                case "teacher":
+                    user = new Teacher(username, displayName);
+                    break;
+                default:
+                    user = new Student(username, displayName);
+            }
+
+            // Establecer valores
+            user.setBalance(balance);
+            user.setPasswordHash(passwordHash);
+
+            return user;
         }
     }
 
@@ -179,12 +220,23 @@ public class DBController {
     private <T> List<T> loadList(String filename, Type type) {
         String json = readFile(filename);
         if (json == null || json.trim().isEmpty() || "null".equals(json)) {
+            System.out.println("Advertencia: " + filename + " está vacío o no existe. Creando lista vacía.");
             return new ArrayList<>();
         }
         try {
             return gson.fromJson(json, type);
         } catch (Exception e) {
-            System.err.println("Error parseando " + filename + ": " + e.getMessage());
+            System.err.println("ERROR CRÍTICO: " + filename + " está corrupto: " + e.getMessage());
+            System.err.println("Se renombrará a " + filename + ".backup y se creará uno nuevo.");
+
+            // Crear backup
+            try {
+                Files.move(Paths.get(DATA_DIR, filename), 
+                           Paths.get(DATA_DIR, filename + ".backup"));
+            } catch (Exception ex) {
+                System.err.println("No se pudo crear backup: " + ex.getMessage());
+            }
+
             return new ArrayList<>();
         }
     }
@@ -226,5 +278,47 @@ public class DBController {
 
             return new MultipleChoiceQuestion(text, options, correct, type);
         }
+    }
+    
+    /**
+    * Recupera un archivo JSON corrupto desde backup o crea uno nuevo
+    */
+    public void recoverCorruptedFile(String filename) {
+       String backupFile = DATA_DIR + "/" + filename + ".backup";
+       String originalFile = DATA_DIR + "/" + filename;
+
+        try {
+            if (Files.exists(Paths.get(backupFile))) {
+                System.out.println("Restaurando " + filename + " desde backup...");
+                Files.copy(Paths.get(backupFile), Paths.get(originalFile), StandardCopyOption.REPLACE_EXISTING);
+                System.out.println("Restauración completada.");
+            } else {
+                System.out.println("No hay backup disponible. Creando " + filename + " limpio...");
+
+                if (filename.equals("users.json")) {
+                    createDefaultUsersFile();
+                } else if (filename.equals("tests.json")) {
+                    createDefaultTestsFile();
+                } else {
+                    writeFile(filename, "[]"); // Crear archivo vacío
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error durante la recuperación: " + e.getMessage());
+        }
+    }
+
+    private void createDefaultUsersFile() {
+       List<User> defaultUsers = new ArrayList<>();
+       Admin admin = new Admin("admin", "Administrador");
+       admin.setPassword("admin123");
+       defaultUsers.add(admin);
+       saveUsers(defaultUsers);
+       System.out.println("Archivo users.json creado con usuario admin (contraseña: admin123)");
+    }
+
+    private void createDefaultTestsFile() {
+       writeFile("tests.json", "[]");
+       System.out.println("Archivo tests.json vacío creado");
     }
 }

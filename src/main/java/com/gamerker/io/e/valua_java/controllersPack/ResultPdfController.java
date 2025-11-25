@@ -21,6 +21,8 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.awt.Desktop;
+import com.itextpdf.kernel.colors.DeviceRgb;
 /**
  *
  * @author hp
@@ -68,7 +70,7 @@ public class ResultPdfController {
             document.add(new Paragraph("\n"));
 
             // Información del estudiante
-            Table infoTable = new Table(2).setWidth(100f).setFixedLayout();
+            Table infoTable = new Table(2).setWidth(500).setFixedLayout();
             infoTable.addCell(createCell("Estudiante:", student.getDisplayName(), true));
             infoTable.addCell(createCell("Usuario:", student.getUsername(), true));
             infoTable.addCell(createCell("Prueba:", result.getTestTitle(), true));
@@ -85,8 +87,8 @@ public class ResultPdfController {
                     .setFontSize(18)
                     .setBold()
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setBackgroundColor(result.getPercentage() >= 70 ? ColorConstants.GREEN : ColorConstants.LIGHT_GRAY)
-                    .setPadding(10);
+                    .setBackgroundColor(result.getPercentage() >= 70 ? new DeviceRgb(144, 238, 144) : ColorConstants.LIGHT_GRAY)
+                    .setPadding(15);
 
             document.add(scoreParagraph);
 
@@ -104,7 +106,7 @@ public class ResultPdfController {
 
             // Tabla de respuestas
             Table answersTable = new Table(4);
-            answersTable.setWidth(100f);
+            answersTable.setWidth(500);
             answersTable.addHeaderCell(createHeaderCell("N°"));
             answersTable.addHeaderCell(createHeaderCell("Pregunta"));
             answersTable.addHeaderCell(createHeaderCell("Tu respuesta"));
@@ -134,13 +136,24 @@ public class ResultPdfController {
                     .setItalic());
 
             System.out.println("PDF generado exitosamente: " + fileName);
-            return fileName;
 
         } catch (Exception e) {
             System.err.println("Error generando PDF de resultado: " + e.getMessage());
             e.printStackTrace();
             return null;
         }
+        
+        try {
+            File pdfFile = new File(fileName);
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(pdfFile);
+                System.out.println("Abriendo resultado...");
+            }
+        } catch (Exception e) {
+            System.out.println("No se pudo abrir el PDF: " + e.getMessage());
+        }
+
+        return fileName;
     }
 
     private Cell createCell(String content) {

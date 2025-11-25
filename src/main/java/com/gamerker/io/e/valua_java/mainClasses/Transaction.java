@@ -18,7 +18,7 @@ public class Transaction {
     private LocalDateTime timestamp;
     private String concept;
     private double amount;
-    private String type; // "CHARGE" o "PAYMENT"
+    private String type;
 
     // constructor que inicializa la transaccion
     public Transaction(String username, String concept, double amount, String type) {

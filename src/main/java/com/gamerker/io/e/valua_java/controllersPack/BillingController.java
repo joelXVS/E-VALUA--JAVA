@@ -49,9 +49,28 @@ public class BillingController {
                 String.format("Uso del sistema (%.2f horas)", hours),
                 amount, "CHARGE");
     }
+    
+    // Obtener usuario por nombre de usuario
+    private User getUserByUsername(String username) {
+        if (username == null || username.trim().isEmpty()) {
+            return null;
+        }
+        
+        List<User> users = db.loadUsers();
+        return users.stream()
+                   .filter(u -> u.getUsername().equalsIgnoreCase(username))
+                   .findFirst()
+                   .orElse(null);
+    }
 
     // Cobro por realizar una prueba
     public Transaction chargeForTest(String username, Test test) {
+        // Verificar que el usuario no tenga saldo negativo
+        User user = getUserByUsername(username);
+        if (user != null && user.getBalance() < 0) {
+            throw new IllegalStateException("Usuario con saldo negativo no puede realizar pruebas");
+        }
+
         if (test == null) return null;
         return new Transaction(username,
                 "Realización de prueba: " + test.getTitle(),

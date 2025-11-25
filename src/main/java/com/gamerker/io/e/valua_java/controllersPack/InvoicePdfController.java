@@ -17,6 +17,7 @@ import java.io.File;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
+import java.awt.Desktop;
 /**
  *
  * @author hp
@@ -52,7 +53,7 @@ public class InvoicePdfController {
             doc.add(new Paragraph("\nCliente: " + user.getDisplayName() + " (" + user.getUsername() + ")")
                     .setFontSize(12));
 
-            Table table = new Table(4).setWidth(100f);
+            Table table = new Table(4).setWidth(500);
             table.addHeaderCell(new Cell().add(new Paragraph("Concepto").setBold()));
             table.addHeaderCell(new Cell().add(new Paragraph("Tipo").setBold()));
             table.addHeaderCell(new Cell().add(new Paragraph("Monto").setBold()));
@@ -80,11 +81,22 @@ public class InvoicePdfController {
                     .setTextAlignment(TextAlignment.CENTER).setItalic());
 
             System.out.println("Factura generada: " + fileName);
-            return fileName;
 
         } catch (Exception e) {
             e.printStackTrace();
             return null;
         }
+        
+        try {
+            File pdfFile = new File(fileName);
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(pdfFile);
+                System.out.println("Abriendo factura...");
+            }
+        } catch (Exception e) {
+            System.out.println("No se pudo abrir el PDF automáticamente: " + e.getMessage());
+        }
+
+        return fileName;
     }
 }
