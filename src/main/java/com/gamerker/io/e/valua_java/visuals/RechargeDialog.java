@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.visuals;
+
 /**
  *
  * @author hp
@@ -15,6 +16,8 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 /**
  * Diálogo de recarga de saldo con todas las opciones:
  * - Ver tarjeta personal
@@ -31,7 +34,9 @@ public class RechargeDialog extends JDialog {
     
     // Componentes UI
     private JLabel statusLabel;
-    private JPanel actionPanel;
+    private JPanel buttonPanel;
+    private JLabel balanceLabel;
+    private JLabel statusInfoLabel;
     
     // Colores
     private final Color COLOR_FONDO = new Color(255, 218, 185);
@@ -65,8 +70,8 @@ public class RechargeDialog extends JDialog {
         mainPanel.add(createHeaderPanel(), BorderLayout.NORTH);
         
         // Panel central con botones de acción
-        actionPanel = createActionPanel();
-        mainPanel.add(new JScrollPane(actionPanel), BorderLayout.CENTER);
+        buttonPanel = createButtonPanel();
+        mainPanel.add(new JScrollPane(buttonPanel), BorderLayout.CENTER);
         
         // Panel inferior con mensajes
         mainPanel.add(createStatusPanel(), BorderLayout.SOUTH);
@@ -89,7 +94,7 @@ public class RechargeDialog extends JDialog {
         // Saldo actual
         panel.add(Box.createVerticalStrut(10));
         String balanceText = String.format("💰 Saldo Actual: $%,.0f", currentUser.getBalance());
-        JLabel balanceLabel = new JLabel(balanceText);
+        balanceLabel = new JLabel(balanceText);
         balanceLabel.setFont(new Font("Verdana", Font.BOLD, 16));
         balanceLabel.setForeground(Color.YELLOW);
         balanceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
@@ -98,18 +103,19 @@ public class RechargeDialog extends JDialog {
         // Estado de saldo
         panel.add(Box.createVerticalStrut(5));
         String statusText = recharge.getBalanceStatus(currentUser);
-        JLabel statusLabel = new JLabel(statusText);
-        statusLabel.setFont(new Font("Verdana", Font.PLAIN, 11));
-        statusLabel.setForeground(Color.BLACK);
-        statusLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        panel.add(statusLabel);
+        statusInfoLabel = new JLabel(statusText);
+        statusInfoLabel.setFont(new Font("Verdana", Font.PLAIN, 11));
+        statusInfoLabel.setForeground(Color.BLACK);
+        statusInfoLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        panel.add(statusInfoLabel);
         
         return panel;
     }
     
-    private JPanel createActionPanel() {
+    private JPanel createButtonPanel() {
         JPanel panel = new JPanel(new GridLayout(0, 2, 15, 15));
         panel.setOpaque(false);
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         
         boolean hasPersonal = recharge.hasPersonalCard(currentUser);
         boolean hasWelcome = recharge.findActiveWelcomeCard(
@@ -126,8 +132,12 @@ public class RechargeDialog extends JDialog {
             
             if (hasWelcome) {
                 addButton(panel, "🎁 Usar Bienvenida", e -> usarBienvenida());
+                addButton(panel, "📋 Ver Bienvenida", e -> verBienvenida());
             }
         }
+        
+        // Botón para actualizar
+        addButton(panel, "🔄 Actualizar", e -> refreshAll());
         
         return panel;
     }
@@ -172,19 +182,29 @@ public class RechargeDialog extends JDialog {
     
     private void mostrarTarjetaPersonal() {
         recharge.getPersonalCard(currentUser).ifPresentOrElse(card -> {
+            String fecha = card.getUsedAt() != null ? 
+                card.getUsedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : 
+                "Nunca";
+            
             String message = String.format("""
-                <html><h2>Tarjeta Personal Activa</h2>
-                <p><b>Número:</b> %s</p>
-                <p><b>Estado:</b> %s</p>
-                <p><b>Último uso:</b> %s</p>
-                </html>
+                ====== TARJETA PERSONAL ACTIVA ======
+                
+                NÚMERO: %s
+                ESTADO: %s
+                ÚLTIMO USO: %s
+                
+                ====================================
+                
+                Esta tarjeta se usa para recargas futuras.
                 """,
                 card.getCardNumber(),
                 card.getStatus(),
-                card.getUsedAt() != null ? card.getUsedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "Nunca"
+                fecha
             );
             
-            JOptionPane.showMessageDialog(this, message, "Tarjeta Personal", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, message, "Tarjeta Personal", 
+                JOptionPane.INFORMATION_MESSAGE);
+            
         }, () -> showError("No tienes tarjeta personal activa"));
     }
     
@@ -230,13 +250,34 @@ public class RechargeDialog extends JDialog {
             }
             
             // Procesar recarga
-            Transaction payment = recharge.rechargePersonalCard(currentUser, code, ref, password);
+            Transaction payment = recharge.rechargePersonalCard(currentUser, code, ref, password, amount);
             currentUser.addTransaction(payment);
             appController.getTransactions().add(payment);
             appController.saveAll();
             
             showSuccess(String.format("Recarga exitosa! Monto: $%,.0f", amount));
-            updateHeader(); // Actualizar saldo mostrado
+            refreshHeader();
+            
+            SwingUtilities.invokeLater(() -> {
+                try {
+                    InvoicePdfController invoiceController = new InvoicePdfController();
+                    String facturaPath = invoiceController.generateRechargeInvoice(
+                        currentUser, 
+                        payment, 
+                        code,
+                        "Tarjeta Personal"
+                    );
+                    
+                    if (facturaPath != null) {
+                        JOptionPane.showMessageDialog(this,
+                            "Comprobante generado: " + facturaPath,
+                            "Comprobante de Recarga",
+                            JOptionPane.INFORMATION_MESSAGE);
+                    }
+                } catch (Exception e) {
+                    System.err.println("Error generando factura: " + e.getMessage());
+                }
+            });
             
         } catch (NumberFormatException e) {
             showError("Monto inválido");
@@ -262,10 +303,20 @@ public class RechargeDialog extends JDialog {
             appController.saveAll();
             
             showSuccess("Tarjeta personal cambiada exitosamente");
-            recharge.getPersonalCard(currentUser).ifPresent(card -> 
-                JOptionPane.showMessageDialog(this, 
-                    "Nueva tarjeta: " + card.getCardNumber(), 
-                    "Nueva Tarjeta", JOptionPane.INFORMATION_MESSAGE));
+            refreshAll();
+            
+            recharge.getPersonalCard(currentUser).ifPresent(card -> {
+                String message = String.format("""
+                    ¡Nueva tarjeta creada!
+                    
+                    Número: %s
+                    
+                    Guarda este número para futuras recargas.
+                    """, card.getCardNumber());
+                    
+                JOptionPane.showMessageDialog(this, message, "Nueva Tarjeta", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            });
             
         } catch (Exception e) {
             showError(e.getMessage());
@@ -289,14 +340,21 @@ public class RechargeDialog extends JDialog {
             appController.saveAll();
             
             showSuccess("Migración exitosa! Se cobró: $7.500");
-            updateHeader();
+            refreshAll();
             
-            // Recargar botones
-            remove(actionPanel);
-            actionPanel = createActionPanel();
-            getContentPane().add(new JScrollPane(actionPanel), BorderLayout.CENTER);
-            revalidate();
-            repaint();
+            // Mostrar nueva tarjeta
+            recharge.getPersonalCard(currentUser).ifPresent(card -> {
+                String message = String.format("""
+                    ¡Tarjeta personal creada!
+                    
+                    Número: %s
+                    
+                    Guarda este número para futuras recargas.
+                    """, card.getCardNumber());
+                    
+                JOptionPane.showMessageDialog(this, message, "Nueva Tarjeta Personal", 
+                    JOptionPane.INFORMATION_MESSAGE);
+            });
             
         } catch (Exception e) {
             showError(e.getMessage());
@@ -330,26 +388,93 @@ public class RechargeDialog extends JDialog {
             appController.saveAll();
             
             showSuccess("Recarga exitosa! Monto: $5.000");
-            updateHeader();
-            
-            // Recargar botones (ya no tendrá bienvenida)
-            remove(actionPanel);
-            actionPanel = createActionPanel();
-            getContentPane().add(new JScrollPane(actionPanel), BorderLayout.CENTER);
-            revalidate();
-            repaint();
+            refreshAll();
             
         } catch (Exception e) {
             showError(e.getMessage());
         }
     }
     
-    private void updateHeader() {
-        // Actualizar el header con el nuevo saldo
-        getContentPane().remove(0); // Remover header anterior
-        getContentPane().add(createHeaderPanel(), BorderLayout.NORTH);
-        revalidate();
-        repaint();
+    private void verBienvenida() {
+        List<RechargeCard> userCards = recharge.getUserCards(currentUser);
+        RechargeCard welcomeCard = userCards.stream()
+                .filter(RechargeCard::isWelcome)
+                .filter(RechargeCard::isActive)
+                .findFirst()
+                .orElse(null);
+        
+        if (welcomeCard == null) {
+            showError("No tienes tarjeta de bienvenida activa");
+            return;
+        }
+        
+        String message = String.format("""
+            ====== TARJETA DE BIENVENIDA ======
+            
+            NÚMERO: %s
+            MONTO: $%,.0f
+            ESTADO: %s
+            
+            ===================================
+            
+            Esta tarjeta solo se puede usar UNA VEZ.
+            Después debes migrar a tarjeta personal.
+            """,
+            welcomeCard.getCardNumber(),
+            welcomeCard.getAmount(),
+            welcomeCard.getStatus()
+        );
+        
+        JOptionPane.showMessageDialog(this, message, "Tarjeta de Bienvenida", 
+            JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void refreshAll() {
+        refreshHeader();
+        refreshButtons();
+    }
+    
+    private void refreshHeader() {
+        // Actualizar los textos sin reconstruir el panel
+        balanceLabel.setText(String.format("💰 Saldo Actual: $%,.0f", currentUser.getBalance()));
+        statusInfoLabel.setText(recharge.getBalanceStatus(currentUser));
+        
+        // Forzar actualización
+        balanceLabel.revalidate();
+        balanceLabel.repaint();
+        statusInfoLabel.revalidate();
+        statusInfoLabel.repaint();
+    }
+    
+    private void refreshButtons() {
+        // Limpiar y reconstruir los botones
+        buttonPanel.removeAll();
+        
+        boolean hasPersonal = recharge.hasPersonalCard(currentUser);
+        boolean hasWelcome = recharge.findActiveWelcomeCard(
+            "EVAX-WELCOME-" + currentUser.getUsername().toUpperCase()) != null;
+        
+        if (hasPersonal) {
+            // Usuario con tarjeta personal
+            addButton(buttonPanel, "👁️ Ver Tarjeta Personal", e -> mostrarTarjetaPersonal());
+            addButton(buttonPanel, "💳 Recargar Personal", e -> recargarPersonal());
+            addButton(buttonPanel, "🔄 Cambiar Tarjeta ($7.500)", e -> cambiarTarjeta());
+        } else {
+            // Usuario sin tarjeta personal
+            addButton(buttonPanel, "🚀 Migrar a Personal", e -> migrarTarjeta());
+            
+            if (hasWelcome) {
+                addButton(buttonPanel, "🎁 Usar Bienvenida", e -> usarBienvenida());
+                addButton(buttonPanel, "📋 Ver Bienvenida", e -> verBienvenida());
+            }
+        }
+        
+        // Botón para actualizar
+        addButton(buttonPanel, "🔄 Actualizar", e -> refreshAll());
+        
+        // Actualizar el panel de botones
+        buttonPanel.revalidate();
+        buttonPanel.repaint();
     }
     
     private void showSuccess(String message) {

@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "role": "admin",
+    "username": "jangelperea",
+    "displayName": "Jose Angel Perea Valencia",
+    "passwordHash": "4ffaeda8a5271f15005d9e5f64483b64a762ba60774c530b458eddf23980b212",
+    "balance": 5000.0
+  },
+  {
+    "role": "student",
+    "username": "janp",
+    "displayName": "snns",
+    "passwordHash": "64d5fc8c20991ff84cd9b0403811a5a7d621ae0bca0fd6b6dac850cb1e5a22ad",
+    "balance": -10000.0
+  }
+]

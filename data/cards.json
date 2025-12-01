@@ -1,2 +1,32 @@
 [
+  {
+    "cardNumber": "EVAX-WELC-OMEJ-ANGE-LPE7872",
+    "amount": 5000.0,
+    "status": "USED",
+    "type": "WELCOME",
+    "usedBy": "jangelperea",
+    "usedAt": "2025-12-01T04:12:48.061501800"
+  },
+  {
+    "cardNumber": "EVAX-PERS-ONAL-JANG-ELP",
+    "amount": 0.0,
+    "status": "ACTIVE",
+    "type": "PERSONAL",
+    "usedBy": "jangelperea"
+  },
+  {
+    "cardNumber": "EVAX-WELC-OMEJ-ANP8171",
+    "amount": 5000.0,
+    "status": "USED",
+    "type": "WELCOME",
+    "usedBy": "janp",
+    "usedAt": "2025-12-01T06:28:03.468273200"
+  },
+  {
+    "cardNumber": "EVAX-PERS-ONAL-JANP-854",
+    "amount": 0.0,
+    "status": "ACTIVE",
+    "type": "PERSONAL",
+    "usedBy": "janp"
+  }
 ]

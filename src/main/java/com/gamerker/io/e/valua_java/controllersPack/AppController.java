@@ -68,7 +68,7 @@ public class AppController {
     
     // ========== MANEJO DE SESIÓN ==========
     // Cargar sesión activa
-    private User loadActiveSession() {
+    public User loadActiveSession() {
         try {
             String json = new String(Files.readAllBytes(Paths.get(SESSION_FILE)));
             JsonObject session = JsonParser.parseString(json).getAsJsonObject();
@@ -203,6 +203,8 @@ public class AppController {
             newUser.setPassword("password");
             System.out.print("Contraseña por defecto: 'password'");
         }
+        
+        RechargeCard welcomeCard = recharge.generateWelcomeCard(newUser);
 
         // Aplicar el saldo de la tarjeta al usuario
         Transaction welcomeTransaction = billing.registerPayment(
@@ -781,13 +783,15 @@ public class AppController {
 
         System.out.print("Ingresa el código de tu tarjeta personal: ");
         String code = scanner.nextLine().trim();
+        System.out.print("Ingresa el monto a recargar ($5.000 - $100.000): ");
+        double amount = scanner.nextDouble();
         System.out.print("Referencia (ingrese un número de referencia): ");
         String ref = scanner.nextLine().trim();
         System.out.print("Confirma tu contraseña: ");
         String password = scanner.nextLine();
 
         try {
-            Transaction payment = recharge.rechargePersonalCard(currentUser, code, ref, password);
+            Transaction payment = recharge.rechargePersonalCard(currentUser, code, ref, password, amount);
             currentUser.addTransaction(payment);
             transactions.add(payment);
             saveAll();
@@ -1282,4 +1286,10 @@ public class AppController {
     public void setCurrentUser(User currentUser) {
         this.currentUser = currentUser;
     }   
+
+    public void setUsers(List<User> users) {
+        this.users = users;
+    }
+    
+    
 }

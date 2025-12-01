@@ -4,6 +4,7 @@
 
 package com.gamerker.io.e.valua_java;
 import com.gamerker.io.e.valua_java.controllersPack.AppController;
+import com.gamerker.io.e.valua_java.visuals.SplashScreen;
 
 /**
  *
@@ -16,9 +17,10 @@ import com.gamerker.io.e.valua_java.controllersPack.AppController;
 public class EVALUA_JAVA {
     public static void main(String[] args) {
         // Consola
-        AppController app = new AppController();
-        app.run();
+        //AppController app = new AppController();
+        //app.run();
         // Grafico
-        AppLauncher.main(args);
+        SplashScreen splash = new SplashScreen();
+        splash.showWithTimer(new AppController());
     }
 }

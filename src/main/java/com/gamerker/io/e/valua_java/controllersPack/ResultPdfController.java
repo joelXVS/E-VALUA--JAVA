@@ -5,6 +5,7 @@
 package com.gamerker.io.e.valua_java.controllersPack;
 import com.gamerker.io.e.valua_java.mainClasses.*;
 import com.gamerker.io.e.valua_java.interfaces.Exportable;
+import com.gamerker.io.e.valua_java.utils.PdfWatermarkUtil;
 import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.font.PdfFont;
@@ -24,6 +25,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.awt.Desktop;
 import com.itextpdf.kernel.colors.DeviceRgb;
+
 /**
  *
  * @author hp
@@ -35,8 +37,6 @@ import com.itextpdf.kernel.colors.DeviceRgb;
 public class ResultPdfController implements Exportable {
 
     private static final String DEST_FOLDER = "resultados_pdf";
-    private static final String FONT_BOLD = "/fonts/Roboto-Bold.ttf";   // opcional (puedes omitir)
-    private static final String FONT_REGULAR = "/fonts/Roboto-Regular.ttf";
 
     static {
         new File(DEST_FOLDER).mkdirs();
@@ -56,12 +56,8 @@ public class ResultPdfController implements Exportable {
 
             document.setMargins(50, 50, 50, 50);
 
-            // Título principal
-            document.add(new Paragraph("RESULTADO OFICIAL - E-VALUA")
-                    .setFontSize(20)
-                    .setBold()
-                    .setTextAlignment(TextAlignment.CENTER)
-                    .setFontColor(ColorConstants.BLUE));
+            // Header con logo
+            PdfWatermarkUtil.addHeaderWithLogo(document, "RESULTADO OFICIAL - E-VALUA");
 
             document.add(new Paragraph("Sistema de Evaluación Académica")
                     .setFontSize(12)
@@ -88,7 +84,8 @@ public class ResultPdfController implements Exportable {
                     .setFontSize(18)
                     .setBold()
                     .setTextAlignment(TextAlignment.CENTER)
-                    .setBackgroundColor(result.getPercentage() >= 70 ? new DeviceRgb(144, 238, 144) : ColorConstants.LIGHT_GRAY)
+                    .setBackgroundColor(result.getPercentage() >= 70 ? 
+                        new DeviceRgb(144, 238, 144) : new DeviceRgb(255, 182, 193)) // Verde o rosa pastel
                     .setPadding(15);
 
             document.add(scoreParagraph);
@@ -125,16 +122,19 @@ public class ResultPdfController implements Exportable {
                 answersTable.addCell(createCell(userAns)
                         .setFontColor(isCorrect ? ColorConstants.GREEN : ColorConstants.RED));
                 answersTable.addCell(createCell(q.getCorrectAnswer() + ") " + q.getCorrectOptionText())
-                        .setFontColor(ColorConstants.BLUE));
+                        .setFontColor(new DeviceRgb(0, 102, 204)));
             }
 
             document.add(answersTable);
 
             // Pie de página
-            document.add(new Paragraph("\n\nGracias por usar E-valua © 2025")
+            document.add(new Paragraph("\n\nGracias por usar E-valua © " + LocalDateTime.now().getYear())
                     .setTextAlignment(TextAlignment.CENTER)
                     .setFontSize(10)
                     .setItalic());
+
+            // Agregar marca de agua
+            PdfWatermarkUtil.addWatermarkToAllPages(pdf);
 
             System.out.println("PDF generado exitosamente: " + fileName);
 
@@ -167,7 +167,8 @@ public class ResultPdfController implements Exportable {
     }
 
     private Cell createHeaderCell(String text) {
-        return new Cell().add(new Paragraph(text).setBold().setBackgroundColor(ColorConstants.LIGHT_GRAY))
+        return new Cell().add(new Paragraph(text).setBold().setBackgroundColor(
+            new DeviceRgb(255, 218, 185))) // Naranja pastel
                 .setTextAlignment(TextAlignment.CENTER).setPadding(8);
     }
 
@@ -181,7 +182,7 @@ public class ResultPdfController implements Exportable {
     
     @Override
     public void exportToPDF(Result result, String filePath) {
-        // Llama a tu método existente, pero usa filePath como destino
-        exportResultToPdf(result, /* student from result */ null); // Adapta: el método original no usa filePath directamente, así que modifica para que lo use
+        // Implementación para la interfaz
+        // (Necesitarías tener acceso al usuario aquí)
     }
 }

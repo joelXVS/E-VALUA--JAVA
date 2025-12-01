@@ -14,6 +14,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.net.URL;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 /**
  * Ventana principal de la aplicación con TabbedPane.
  * Contiene las pestañas: Iniciar Sesión, Registrarse y Acerca de.
@@ -56,6 +58,64 @@ public class MainFrame extends JFrame {
         
         // Panel inferior con botón de salir
         add(createExitPanel(), BorderLayout.SOUTH);
+        
+        // Verificar si hay sesión activa al iniciar
+        checkActiveSession();
+    }
+    
+    /**
+     * Verifica si hay una sesión activa y redirige al dashboard
+     */
+    private void checkActiveSession() {
+        User activeUser = appController.loadActiveSession();
+        
+        if (activeUser != null) {
+            // Mostrar mensaje de sesión activa detectada
+            String message = String.format("""
+                <html>
+                <div style='text-align: center; font-size: 14px;'>
+                    <b>Sesión activa detectada</b><br>
+                    Usuario: <b>%s</b><br>
+                    Última actividad: %s<br><br>
+                    Redirigiendo al dashboard...
+                </div>
+                </html>
+                """, 
+                activeUser.getDisplayName(),
+                LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm"))
+            );
+            
+            JLabel label = new JLabel(message);
+            label.setHorizontalAlignment(SwingConstants.CENTER);
+            label.setFont(new Font("Verdana", Font.PLAIN, 12));
+            
+            JOptionPane.showMessageDialog(
+                this, 
+                label, 
+                "Sesión Activa", 
+                JOptionPane.INFORMATION_MESSAGE
+            );
+            
+            // Esperar 2 segundos y abrir dashboard
+            Timer timer = new Timer(2000, e -> {
+                openUserDashboard(activeUser);
+            });
+            timer.setRepeats(false);
+            timer.start();
+        }
+    }
+    
+    /**
+     * Abre el dashboard del usuario
+     */
+    private void openUserDashboard(User user) {
+        // Cerrar esta ventana
+        setVisible(false);
+        dispose();
+        
+        // Abrir ventana del usuario
+        UserDashboard dashboard = new UserDashboard(appController, user);
+        dashboard.setVisible(true);
     }
     
     /**
@@ -67,7 +127,7 @@ public class MainFrame extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 10, 0));
         
         try {
-            URL logoUrl = getClass().getResource("/resources/logo_name.png");
+            URL logoUrl = getClass().getResource("com/gamerker/io/e/valua_java/utils/resources/logo_name.png");
             if (logoUrl != null) {
                 ImageIcon logo = new ImageIcon(logoUrl);
                 JLabel logoLabel = new JLabel(logo);
@@ -151,15 +211,13 @@ public class MainFrame extends JFrame {
         if (user != null) {
             loginPanel.showMessage("¡Login exitoso!", false);
             
-            // Abrir dashboard del usuario (en EDT)
+            // Guardar sesión activa
+            appController.setCurrentUser(user);
+            appController.saveActiveSession();
+            
+            // Abrir dashboard del usuario
             SwingUtilities.invokeLater(() -> {
-                // Cerrar esta ventana
-                setVisible(false);
-                dispose();
-                
-                // Abrir ventana del usuario
-                UserDashboard dashboard = new UserDashboard(appController, user);
-                dashboard.setVisible(true);
+                openUserDashboard(user);
             });
         } else {
             loginPanel.showMessage("Credenciales incorrectas", true);
@@ -207,6 +265,8 @@ public class MainFrame extends JFrame {
         
         newUser.setPassword(password.isEmpty() ? "password" : password);
         
+        RechargeCard welcomeCard = appController.getRechargeController().generateWelcomeCard(newUser);
+        
         // Recarga inicial de bienvenida
         Transaction welcomeTx = new Transaction(
             username, 
@@ -217,8 +277,9 @@ public class MainFrame extends JFrame {
         newUser.addTransaction(welcomeTx);
         
         // Guardar
-        appController.getUsers().add(newUser);
-        appController.getTransactions().add(welcomeTx);
+        java.util.List<User> actualUsers = appController.getUsers();
+        actualUsers.add(newUser);
+        appController.setUsers(actualUsers);
         appController.saveAll();
         
         registerPanel.showMessage("¡Registro exitoso! Saldo inicial: $5.000", false);

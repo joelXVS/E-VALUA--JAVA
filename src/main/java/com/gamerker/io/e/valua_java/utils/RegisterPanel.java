@@ -7,12 +7,6 @@ package com.gamerker.io.e.valua_java.utils;
  *
  * @author hp
  */
-import com.gamerker.io.e.valua_java.controllersPack.AppController;
-import com.gamerker.io.e.valua_java.mainClasses.Admin;
-import com.gamerker.io.e.valua_java.mainClasses.Student;
-import com.gamerker.io.e.valua_java.mainClasses.Teacher;
-import com.gamerker.io.e.valua_java.mainClasses.User;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionListener;

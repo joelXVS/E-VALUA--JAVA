@@ -35,12 +35,21 @@ public class UserDashboard extends JFrame {
     private final Color COLOR_BOTON = new Color(255, 140, 0);
     private final Color COLOR_BOTON_HOVER = new Color(255, 165, 0);
     
+    // Fuente para emojis
+    private Font emojiFont;
+    
     public UserDashboard(AppController appController, User currentUser) {
         this.appController = appController;
         this.currentUser = currentUser;
         this.billing = new BillingController();
         this.recharge = new RechargeController();
         this.db = new DBController();
+        
+        // Inicializar fuente para emojis
+        initializeEmojiFont();
+        
+        // Actualizar actividad de sesión
+        appController.saveActiveSession();
         
         // Configurar ventana
         setTitle("E-VALUA - Dashboard: " + currentUser.getDisplayName());
@@ -76,6 +85,41 @@ public class UserDashboard extends JFrame {
     }
     
     /**
+     * Inicializa la fuente para soportar emojis Unicode
+     */
+    private void initializeEmojiFont() {
+        // Primero intentar con fuentes comunes que soportan emojis bien
+        String[] emojiFonts = {
+            "Segoe UI Emoji",
+            "Apple Color Emoji",
+            "Noto Color Emoji",
+            "Segoe UI Symbol",
+            "DejaVu Sans",
+            "Arial Unicode MS",
+            "Symbola",
+            "EmojiOne Color",
+            "Twemoji Mozilla"
+        };
+        
+        GraphicsEnvironment ge = GraphicsEnvironment.getLocalGraphicsEnvironment();
+        String[] availableFonts = ge.getAvailableFontFamilyNames();
+        
+        for (String fontName : emojiFonts) {
+            for (String available : availableFonts) {
+                if (available.equalsIgnoreCase(fontName)) {
+                    emojiFont = new Font(fontName, Font.PLAIN, 48);
+                    System.out.println("Fuente de emojis seleccionada: " + fontName);
+                    return;
+                }
+            }
+        }
+        
+        // Si no encuentra fuentes específicas, usa la fuente por defecto pero con un tamaño mayor
+        emojiFont = new Font(Font.SANS_SERIF, Font.PLAIN, 48);
+        System.out.println("Usando fuente por defecto para emojis");
+    }
+    
+    /**
      * Panel superior con foto/ícono de usuario y datos principales
      */
     private JPanel createUserPanel() {
@@ -83,9 +127,15 @@ public class UserDashboard extends JFrame {
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(15, 15, 15, 15));
         
-        // Ícono de usuario (Unicode o imagen)
-        JLabel userIcon = new JLabel("👤");
-        userIcon.setFont(new Font("Segoe UI", Font.PLAIN, 48));
+        // Ícono de usuario según rol con emoji Unicode
+        String emojiIcon = switch (currentUser.getRole()) {
+            case "admin" -> "👑";
+            case "teacher" -> "🎓";
+            default -> "👤"; // student
+        };
+        
+        JLabel userIcon = new JLabel(emojiIcon);
+        userIcon.setFont(emojiFont.deriveFont(48f)); // Usar fuente de emojis
         userIcon.setForeground(Color.BLACK);
         panel.add(userIcon);
         
@@ -94,26 +144,32 @@ public class UserDashboard extends JFrame {
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
         dataPanel.setOpaque(false);
         
-        // Nombre y rol
+        // Nombre y rol con emoji
+        String roleEmoji = switch (currentUser.getRole()) {
+            case "admin" -> "👑";
+            case "teacher" -> "🎓";
+            default -> "📚";
+        };
+        
         JLabel nameLabel = new JLabel(currentUser.getDisplayName());
         nameLabel.setFont(new Font("Verdana", Font.BOLD, 20));
         nameLabel.setForeground(Color.BLACK);
         dataPanel.add(nameLabel);
         
-        JLabel roleLabel = new JLabel("Rol: " + currentUser.getRole().toUpperCase());
+        JLabel roleLabel = new JLabel(roleEmoji + "Rol: " + currentUser.getRole().toUpperCase());
         roleLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
         roleLabel.setForeground(Color.BLACK);
         dataPanel.add(roleLabel);
         
-        // Saldo y crédito
-        JLabel balanceLabel = new JLabel(String.format("Saldo: $%,.0f | %s", 
+        // Saldo y crédito con emoji
+        JLabel balanceLabel = new JLabel("💰" + String.format("Saldo: $%,.0f | %s", 
             currentUser.getBalance(), recharge.getBalanceStatus(currentUser)));
         balanceLabel.setFont(new Font("Verdana", Font.PLAIN, 12));
         balanceLabel.setForeground(Color.BLACK);
         dataPanel.add(balanceLabel);
         
-        // Fecha de login
-        JLabel dateLabel = new JLabel("Login: " + LocalDateTime.now().format(
+        // Fecha de login con emoji
+        JLabel dateLabel = new JLabel("🕐 Login: " + LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         dateLabel.setFont(new Font("Verdana", Font.ITALIC, 11));
         dateLabel.setForeground(Color.BLACK);
@@ -129,13 +185,14 @@ public class UserDashboard extends JFrame {
     
     /**
      * Panel central con mosaicos de funciones (íconos grandes + texto)
+     * Se muestran diferentes opciones según el rol del usuario
      */
     private JPanel createTilesPanel() {
         JPanel panel = new JPanel(new GridLayout(0, 4, 15, 15)); // 4 columnas, automático
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
         
-        // Tiles base para todos los roles
+        // ===== TILES PARA TODOS LOS ROLES =====
         addTile(panel, "📋", "Ver Pruebas", "Explora todas las pruebas disponibles", "1");
         addTile(panel, "📝", "Realizar Prueba", "Inicia una nueva evaluación", "2");
         addTile(panel, "📊", "Mis Resultados", "Revisa tus resultados recientes", "3");
@@ -145,13 +202,21 @@ public class UserDashboard extends JFrame {
         addTile(panel, "🎯", "Ranking por Prueba", "Mejores puntuaciones por prueba", "7");
         addTile(panel, "🗄️", "Almacenamiento", "Gestiona tu espacio de resultados", "8");
         
-        // Tiles exclusivos según rol
-        if (currentUser.getRole().equals("teacher") || currentUser.getRole().equals("admin")) {
+        // ===== TILES EXCLUSIVOS PARA PROFESORES =====
+        if (currentUser.getRole().equals("teacher")) {
             addTile(panel, "➕", "Crear Prueba", "Diseña nuevas evaluaciones", "9");
+            addTile(panel, "📈", "Estadísticas", "Ver estadísticas de pruebas", "11");
+            addTile(panel, "👨‍🏫", "Mis Estudiantes", "Ver progreso de estudiantes", "12");
         }
         
+        // ===== TILES EXCLUSIVOS PARA ADMINISTRADORES =====
         if (currentUser.getRole().equals("admin")) {
-            addTile(panel, "⚙️", "Gestión de Usuarios", "Administra el sistema", "10");
+            addTile(panel, "➕", "Crear Prueba", "Diseña nuevas evaluaciones", "9");
+            addTile(panel,"🙍‍️", "Gestión de Usuarios", "Administra usuarios del sistema", "10");
+            addTile(panel, "📈", "Estadísticas", "Ver estadísticas del sistema", "11");
+            addTile(panel, "🔧", "Configuración", "Configurar sistema", "13");
+            addTile(panel, "📋", "Reportes", "Generar reportes del sistema", "14");
+            addTile(panel, "💾", "Backup", "Respaldar datos del sistema", "15");
         }
         
         return panel;
@@ -160,7 +225,7 @@ public class UserDashboard extends JFrame {
     /**
      * Crea un mosaico individual (ícono + texto + descripción)
      */
-    private void addTile(JPanel parent, String icon, String title, String description, String actionCommand) {
+    private void addTile(JPanel parent, String emoji, String title, String description, String actionCommand) {
         JPanel tile = new JPanel();
         tile.setLayout(new BoxLayout(tile, BoxLayout.Y_AXIS));
         tile.setBackground(COLOR_BOTON);
@@ -169,16 +234,25 @@ public class UserDashboard extends JFrame {
             BorderFactory.createEmptyBorder(15, 10, 15, 10)
         ));
         tile.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        tile.setPreferredSize(new Dimension(200, 200));
         
         // Hover effect
         tile.addMouseListener(new java.awt.event.MouseAdapter() {
             @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 tile.setBackground(COLOR_BOTON_HOVER);
+                tile.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(255, 120, 0), 3),
+                    BorderFactory.createEmptyBorder(15, 10, 15, 10)
+                ));
             }
             @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 tile.setBackground(COLOR_BOTON);
+                tile.setBorder(BorderFactory.createCompoundBorder(
+                    BorderFactory.createLineBorder(new Color(255, 165, 0), 2),
+                    BorderFactory.createEmptyBorder(15, 10, 15, 10)
+                ));
             }
         });
         
@@ -190,12 +264,22 @@ public class UserDashboard extends JFrame {
             }
         });
         
-        // Ícono (Unicode emoji o imagen)
-        JLabel iconLabel = new JLabel(icon, SwingConstants.CENTER);
-        iconLabel.setFont(new Font("Segoe UI", Font.PLAIN, 48));
+        // Espaciador
+        tile.add(Box.createRigidArea(new Dimension(0, 30)));
+        
+        // Ícono con emoji Unicode
+        JLabel iconLabel = new JLabel(emoji, SwingConstants.CENTER);
+        iconLabel.setFont(emojiFont.deriveFont(36f));
         iconLabel.setForeground(Color.BLACK);
         iconLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        // Añadir margen superior al JLabel para que los emojis no se corten
+        iconLabel.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // 5px arriba
+
         tile.add(iconLabel);
+        
+        // Espaciador
+        tile.add(Box.createRigidArea(new Dimension(0, 5)));
         
         // Título
         JLabel titleLabel = new JLabel(title, SwingConstants.CENTER);
@@ -204,13 +288,16 @@ public class UserDashboard extends JFrame {
         titleLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         tile.add(titleLabel);
         
+        // Espaciador
+        tile.add(Box.createRigidArea(new Dimension(0, 5)));
+        
         // Descripción
-        JLabel descLabel = new JLabel(description, SwingConstants.CENTER);
+        JLabel descLabel = new JLabel("<html><center>" + description + "</center></html>", SwingConstants.CENTER);
         descLabel.setFont(new Font("Verdana", Font.PLAIN, 11));
         descLabel.setForeground(Color.BLACK);
         descLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
-        descLabel.setMaximumSize(new Dimension(180, 30));
-        descLabel.setPreferredSize(new Dimension(180, 30));
+        descLabel.setMaximumSize(new Dimension(180, 60));
+        descLabel.setPreferredSize(new Dimension(180, 60));
         tile.add(descLabel);
         
         parent.add(tile);
@@ -225,32 +312,54 @@ public class UserDashboard extends JFrame {
         panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         
         JButton logoutButton = new JButton("⏻ Cerrar Sesión");
-        logoutButton.setFont(new Font("Verdana", Font.BOLD, 16));
+        logoutButton.setFont(emojiFont.deriveFont(16f)); // Usar fuente de emojis para el ícono
         logoutButton.setBackground(new Color(220, 53, 69)); // Rojo suave
         logoutButton.setForeground(Color.BLACK);
         logoutButton.setFocusPainted(false);
+        logoutButton.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(180, 30, 40), 2),
+            BorderFactory.createEmptyBorder(10, 20, 10, 20)
+        ));
         logoutButton.setPreferredSize(new Dimension(200, 45));
         logoutButton.addActionListener(e -> handleLogout());
+        
+        // Efecto hover para el botón
+        logoutButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                logoutButton.setBackground(new Color(200, 35, 51));
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                logoutButton.setBackground(new Color(220, 53, 69));
+            }
+        });
         
         panel.add(logoutButton);
         return panel;
     }
     
     /**
-     * Maneja el clic en un mosaico
+     * Maneja el clic en un mosaico según el comando de acción
      */
     private void handleTileClick(String actionCommand) {
         switch (actionCommand) {
-            case "1": mostrarPruebasDisponibles(); break;
-            case "2": realizarPrueba(); break;
-            case "3": mostrarResultados(); break;
-            case "4": recargarSaldo(); break;
-            case "5": generarFactura(); break;
-            case "6": mostrarRankingGlobal(); break;
-            case "7": mostrarRankingPrueba(); break;
-            case "8": gestionarAlmacenamiento(); break;
-            case "9": crearPrueba(); break;
-            case "10": gestionarUsuarios(); break;
+            case "1" -> mostrarPruebasDisponibles();
+            case "2" -> realizarPrueba();
+            case "3" -> mostrarResultados();
+            case "4" -> recargarSaldo();
+            case "5" -> generarFactura();
+            case "6" -> mostrarRankingGlobal();
+            case "7" -> mostrarRankingPrueba();
+            case "8" -> gestionarAlmacenamiento();
+            case "9" -> crearPrueba();
+            case "10" -> gestionarUsuarios();
+            case "11" -> mostrarEstadisticas();
+            case "12" -> gestionarEstudiantes();
+            case "13" -> mostrarConfiguracion();
+            case "14" -> generarReportes();
+            case "15" -> realizarBackup();
+            default -> JOptionPane.showMessageDialog(this, "Opción no implementada", "Información", JOptionPane.INFORMATION_MESSAGE);
         }
     }
     
@@ -259,14 +368,26 @@ public class UserDashboard extends JFrame {
     private void mostrarPruebasDisponibles() {
         List<Test> tests = appController.getTests();
         if (tests.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay pruebas disponibles.", "Pruebas", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "📭 No hay pruebas disponibles.", "Pruebas", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
-        StringBuilder sb = new StringBuilder("=== PRUEBAS DISPONIBLES ===\n\n");
+        StringBuilder sb = new StringBuilder("📋 PRUEBAS DISPONIBLES 📋\n\n");
         for (int i = 0; i < tests.size(); i++) {
             Test t = tests.get(i);
-            sb.append(String.format("%d. %s - $%,.0f\n", i + 1, t.getTitle(), t.getPrice()));
+            String emoji;
+            
+            if (t.getTitle().toLowerCase().contains("lógica")) {
+                emoji = "🤓";
+            } else if (t.getTitle().toLowerCase().contains("matemática") || t.getTitle().toLowerCase().contains("matematica")) {
+                emoji = "🔢";
+            } else if (t.getTitle().toLowerCase().contains("verbal")) {
+                emoji = "🗣️";
+            } else {
+                emoji = "📝";
+            }
+            
+            sb.append(String.format("%s %d. %s - $%,.0f\n", emoji, i + 1, t.getTitle(), t.getPrice()));
         }
         
         JTextArea textArea = new JTextArea(sb.toString());
@@ -275,7 +396,7 @@ public class UserDashboard extends JFrame {
         JScrollPane scrollPane = new JScrollPane(textArea);
         scrollPane.setPreferredSize(new Dimension(600, 400));
         
-        JOptionPane.showMessageDialog(this, scrollPane, "Pruebas Disponibles", JOptionPane.INFORMATION_MESSAGE);
+        JOptionPane.showMessageDialog(this, scrollPane, "📋 Pruebas Disponibles", JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void realizarPrueba() {
@@ -289,7 +410,6 @@ public class UserDashboard extends JFrame {
     }
     
     private void recargarSaldo() {
-        // Ya implementado en RechargeDialog
         RechargeDialog dialog = new RechargeDialog(this, currentUser, appController);
         dialog.setVisible(true);
     }
@@ -299,15 +419,15 @@ public class UserDashboard extends JFrame {
         List<Transaction> daily = billing.getDailyTransactions(currentUser.getUsername(), today);
         
         if (daily.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "No hay consumos hoy.", "Factura", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "📭 No hay consumos hoy.", "Factura", JOptionPane.INFORMATION_MESSAGE);
             return;
         }
         
         String fileName = new InvoicePdfController().generateInvoice(currentUser, daily, today);
         if (fileName != null) {
-            JOptionPane.showMessageDialog(this, "Factura generada correctamente.", "Factura", JOptionPane.INFORMATION_MESSAGE);
+            JOptionPane.showMessageDialog(this, "✅ Factura generada correctamente.", "Factura", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            JOptionPane.showMessageDialog(this, "Error al generar factura.", "Error", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "❌ Error al generar factura.", "Error", JOptionPane.ERROR_MESSAGE);
         }
     }
     
@@ -335,7 +455,6 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // TODO: Implementar creación de prueba
         TestManagerDialog testCreator = new TestManagerDialog(this, currentUser, appController);
         testCreator.setVisible(true);
     }
@@ -345,9 +464,48 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        // TODO: Implementar gestión de usuarios
         ManageUsersDialog usuariosMG = new ManageUsersDialog(this, currentUser, appController);
         usuariosMG.setVisible(true);
+    }
+    
+    private void mostrarEstadisticas() {
+        if (!currentUser.getRole().equals("teacher") && !currentUser.getRole().equals("admin")) {
+            JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "📊 Estadísticas - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void gestionarEstudiantes() {
+        if (!currentUser.getRole().equals("teacher")) {
+            JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "👨‍🏫 Gestión de Estudiantes - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void mostrarConfiguracion() {
+        if (!currentUser.getRole().equals("admin")) {
+            JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "🔧 Configuración del Sistema - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void generarReportes() {
+        if (!currentUser.getRole().equals("admin")) {
+            JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "📋 Reportes del Sistema - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+    }
+    
+    private void realizarBackup() {
+        if (!currentUser.getRole().equals("admin")) {
+            JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+        JOptionPane.showMessageDialog(this, "💾 Backup del Sistema - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
     }
     
     /**
@@ -355,17 +513,13 @@ public class UserDashboard extends JFrame {
      */
     private void handleLogout() {
         int confirm = JOptionPane.showConfirmDialog(this, 
-            "¿Desea cerrar sesión?", "Confirmar cierre", 
+            "¿Desea cerrar sesión?", "🔒 Confirmar cierre", 
             JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            // Procesar cierre de sesión
-            Transaction sessionCharge = billing.endSession(currentUser.getUsername());
-            if (sessionCharge != null) {
-                currentUser.addTransaction(sessionCharge);
-                appController.getTransactions().add(sessionCharge);
-                appController.saveAll();
-            }
+            appController.saveAll();
+            
+            appController.clearActiveSession();
             
             // Volver al login
             dispose();
@@ -374,5 +528,15 @@ public class UserDashboard extends JFrame {
                 mainFrame.setVisible(true);
             });
         }
+    }
+    
+    /**
+     * Método para obtener la fuente de emojis con tamaño específico
+     */
+    public Font getEmojiFont(float size) {
+        if (emojiFont != null) {
+            return emojiFont.deriveFont(size);
+        }
+        return new Font(Font.SANS_SERIF, Font.PLAIN, (int)size);
     }
 }

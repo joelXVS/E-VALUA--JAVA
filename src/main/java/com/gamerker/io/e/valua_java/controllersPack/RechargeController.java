@@ -140,7 +140,7 @@ public class RechargeController {
     /**
      * Recarga con tarjeta personal (después de migrar)
      */
-    public Transaction rechargePersonalCard(User user, String cardNumber, String reference, String password) {
+    public Transaction rechargePersonalCard(User user, String cardNumber, String reference, String password, double amount) {
         if (!user.verifyPassword(password)) {
             throw new SecurityException("Contraseña incorrecta");
         }
@@ -160,20 +160,8 @@ public class RechargeController {
             throw new SecurityException("Esta no es tu tarjeta personal");
         }
 
-        // ---- NUEVO: pedir monto ----
-        double amount;
-        while (true) {
-            System.out.print("Monto a recargar ($5.000 - $100.000): ");
-            try {
-                amount = Double.parseDouble(scanner.nextLine().trim());
-                if (amount < 5000.0 || amount > 100000.0) {
-                    System.out.println("Monto fuera de rango. Inténtalo de nuevo.");
-                    continue;
-                }
-                break;
-            } catch (NumberFormatException e) {
-                System.out.println("Cantidad inválida.");
-            }
+        if (amount < 5000.0 || amount > 100000.0) {
+            throw new IllegalArgumentException("Monto fuera de rango ($5.000 - $100.000)");
         }
 
         String concept = "Recarga con tarjeta personal " + personalCard.getCardNumber() +
@@ -252,7 +240,7 @@ public class RechargeController {
     /**
      * Genera tarjeta de bienvenida (solo para uso interno)
      */
-    private RechargeCard generateWelcomeCard(User user) {
+    public RechargeCard generateWelcomeCard(User user) {
         String usernamePart = user.getUsername().toUpperCase().replaceAll("[^A-Z0-9]", "");
         if (usernamePart.isEmpty()) usernamePart = "USER";
         if (usernamePart.length() > 8) usernamePart = usernamePart.substring(0, 8);
