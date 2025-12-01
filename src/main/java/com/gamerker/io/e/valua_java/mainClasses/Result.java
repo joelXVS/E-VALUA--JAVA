@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
+import java.time.LocalDateTime;
 import java.util.*;
 /**
  *
@@ -19,6 +20,8 @@ public class Result {
     private int total;
     private double percentage;
     private List<String> answers;
+    private boolean archived;
+    private LocalDateTime timestamp;
 
     // constructor que inicializa todos los campos
     public Result(String studentUsername, String testTitle, int score, int total, double percentage, List<String> answers) {
@@ -28,6 +31,8 @@ public class Result {
         this.total = total;
         this.percentage = percentage;
         this.answers = new ArrayList<>(answers);
+        this.archived = false;
+        this.timestamp = LocalDateTime.now();
     }
 
     // getters para acceder a los campos
@@ -37,7 +42,13 @@ public class Result {
     public int getScore() { return score; }
     public int getTotal() { return total; }
     public double getPercentage() { return percentage; }
+    public boolean isArchived() { return archived; }
+    public LocalDateTime getTimestamp() { return timestamp; }
 
+    // setters para modificar los campos
+    public void setArchived(boolean archived) { this.archived = archived; }
+    public void setTimestamp(LocalDateTime timestamp) { this.timestamp = timestamp; }
+    
     /**
      * devuelve resumen compacto del resultado
      * formato: usuario - prueba: puntaje/total (porcentaje%)

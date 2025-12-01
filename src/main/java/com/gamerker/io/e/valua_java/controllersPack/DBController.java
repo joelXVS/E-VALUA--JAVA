@@ -4,6 +4,7 @@
 package com.gamerker.io.e.valua_java.controllersPack;
 import com.gamerker.io.e.valua_java.mainClasses.*;
 import com.gamerker.io.e.valua_java.utils.*;
+import com.gamerker.io.e.valua_java.interfaces.Manageable;
 import com.google.gson.*;
 import com.google.gson.reflect.TypeToken;
 
@@ -26,7 +27,7 @@ import java.lang.reflect.Type;
  * controlador de base de datos (archivos JSON)
  * maneja carga y guardado de usuarios, pruebas, resultados, transacciones y tarjetas
  */
-public class DBController {
+public class DBController implements Manageable {
 
     private static final String DATA_DIR = "data";
     private static final Gson gson = new GsonBuilder()
@@ -168,11 +169,70 @@ public class DBController {
 
     // ====================== RESULTADOS ======================
     public List<Result> loadResults() {
-        return loadList("results.json", new TypeToken<List<Result>>() {}.getType());
+        String json = readFile("results.json");
+        if (json == null || json.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        try {
+            JsonArray array = JsonParser.parseString(json).getAsJsonArray();
+            List<Result> results = new ArrayList<>();
+            for (JsonElement elem : array) {
+                JsonObject obj = elem.getAsJsonObject();
+                String studentUsername = obj.get("studentUsername").getAsString();
+                String testTitle = obj.get("testTitle").getAsString();
+                int score = obj.get("score").getAsInt();
+                int total = obj.get("total").getAsInt();
+                double percentage = obj.get("percentage").getAsDouble();
+
+                JsonArray answersArray = obj.getAsJsonArray("answers");
+                List<String> answers = new ArrayList<>();
+                for (JsonElement ans : answersArray) {
+                    answers.add(ans.getAsString());
+                }
+
+                Result result = new Result(studentUsername, testTitle, score, total, percentage, answers);
+
+                if (obj.has("archived")) {
+                    result.setArchived(obj.get("archived").getAsBoolean());
+                }
+
+                // Cargar timestamp si existe
+                if (obj.has("timestamp")) {
+                    String timestampStr = obj.get("timestamp").getAsString();
+                    result.setTimestamp(LocalDateTime.parse(timestampStr));
+                }
+
+                results.add(result);
+            }
+            return results;
+        } catch (Exception e) {
+            System.err.println("Error cargando resultados: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     public void saveResults(List<Result> results) {
-        saveList(results, "results.json");
+        JsonArray array = new JsonArray();
+        for (Result r : results) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("studentUsername", r.getStudentUsername());
+            obj.addProperty("testTitle", r.getTestTitle());
+            obj.addProperty("score", r.getScore());
+            obj.addProperty("total", r.getTotal());
+            obj.addProperty("percentage", r.getPercentage());
+
+            JsonArray answersArray = new JsonArray();
+            for (String ans : r.getAnswers()) {
+                answersArray.add(ans);
+            }
+            obj.add("answers", answersArray);
+
+            obj.addProperty("archived", r.isArchived());
+            obj.addProperty("timestamp", r.getTimestamp().toString()); // Guardar timestamp
+
+            array.add(obj);
+        }
+        writeFile("results.json", gson.toJson(array));
     }
 
     // ====================== TRANSACCIONES ======================
@@ -186,11 +246,61 @@ public class DBController {
 
     // ====================== TARJETAS DE RECARGA ======================
     public List<RechargeCard> loadCards() {
-        return loadList("cards.json", new TypeToken<List<RechargeCard>>() {}.getType());
+        String json = readFile("cards.json");
+        if (json == null || json.trim().isEmpty()) {
+            return new ArrayList<>();
+        }
+        try {
+            JsonArray array = JsonParser.parseString(json).getAsJsonArray();
+            List<RechargeCard> loaded = new ArrayList<>();
+
+            for (JsonElement elem : array) {
+                JsonObject obj = elem.getAsJsonObject();
+
+                String number   = obj.get("cardNumber").getAsString();
+                double amount   = obj.get("amount").getAsDouble();
+                String status   = obj.get("status").getAsString();
+                String usedBy   = obj.has("usedBy")   ? obj.get("usedBy").getAsString()   : null;
+                String usedAt   = obj.has("usedAt")   ? obj.get("usedAt").getAsString()   : null;
+                String typeStr  = obj.has("type")     ? obj.get("type").getAsString()     : "WELCOME";
+
+                RechargeCard.CardType type = 
+                    "PERSONAL".equalsIgnoreCase(typeStr) 
+                    ? RechargeCard.CardType.PERSONAL 
+                    : RechargeCard.CardType.WELCOME;
+
+                RechargeCard card = new RechargeCard(number, amount, type == RechargeCard.CardType.WELCOME);
+                card.setStatus(status);
+                if (usedBy != null) card.setUsedBy(usedBy);
+                if (usedAt != null) card.setUsedAt(LocalDateTime.parse(usedAt));
+                loaded.add(card);
+            }
+            return loaded;
+
+        } catch (Exception e) {
+            System.err.println("Error cargando tarjetas: " + e.getMessage());
+            return new ArrayList<>();
+        }
     }
 
     public void saveCards(List<RechargeCard> cards) {
-        saveList(cards, "cards.json");
+        JsonArray array = new JsonArray();
+        for (RechargeCard c : cards) {
+            JsonObject obj = new JsonObject();
+            obj.addProperty("cardNumber", c.getCardNumber());
+            obj.addProperty("amount",     c.getAmount());
+            obj.addProperty("status",     c.getStatus());
+            obj.addProperty("type",       c.getType().name()); // GUARDAR TIPO
+
+            if (c.getUsedBy() != null) {
+                obj.addProperty("usedBy", c.getUsedBy());
+                if (c.getUsedAt() != null) { // usadoAt puede no haberse seteado
+                    obj.addProperty("usedAt", c.getUsedAt().toString());
+                }
+            }
+            array.add(obj);
+        }
+        writeFile("cards.json", gson.toJson(array));
     }
 
     // ====================== MÉTODOS GENÉRICOS ======================
@@ -320,5 +430,22 @@ public class DBController {
     private void createDefaultTestsFile() {
        writeFile("tests.json", "[]");
        System.out.println("Archivo tests.json vacío creado");
+    }
+    
+    @Override
+    public void saveToFile(List<User> users, String filename) {
+        // Lógica: si filename es "users.json", llama saveUsers(users); adapta para otros archivos
+        if ("users.json".equals(filename)) {
+            saveUsers(users);
+        } // Agrega para tests, results, etc.
+    }
+
+    @Override
+    public List<User> loadFromFile(String filename) {
+        // Similar: si "users.json", return loadUsers(); devuelve List<User> genérica (adapta si es necesario)
+        if ("users.json".equals(filename)) {
+            return loadUsers();
+        }
+        return new ArrayList<>(); // Stub para otros
     }
 }

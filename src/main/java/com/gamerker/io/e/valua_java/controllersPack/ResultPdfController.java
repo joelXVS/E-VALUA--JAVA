@@ -4,6 +4,7 @@
  */
 package com.gamerker.io.e.valua_java.controllersPack;
 import com.gamerker.io.e.valua_java.mainClasses.*;
+import com.gamerker.io.e.valua_java.interfaces.Exportable;
 import com.itextpdf.kernel.colors.Color;
 import com.itextpdf.kernel.colors.ColorConstants;
 import com.itextpdf.kernel.font.PdfFont;
@@ -31,7 +32,7 @@ import com.itextpdf.kernel.colors.DeviceRgb;
  * exporta resultados de pruebas a pdf
  * implementa interfaz exportable
  */
-public class ResultPdfController {
+public class ResultPdfController implements Exportable {
 
     private static final String DEST_FOLDER = "resultados_pdf";
     private static final String FONT_BOLD = "/fonts/Roboto-Bold.ttf";   // opcional (puedes omitir)
@@ -176,5 +177,11 @@ public class ResultPdfController {
                 .filter(t -> t.getTitle().equals(title))
                 .findFirst()
                 .orElse(null);
+    }
+    
+    @Override
+    public void exportToPDF(Result result, String filePath) {
+        // Llama a tu método existente, pero usa filePath como destino
+        exportResultToPdf(result, /* student from result */ null); // Adapta: el método original no usa filePath directamente, así que modifica para que lo use
     }
 }

@@ -4,6 +4,7 @@
 
 package com.gamerker.io.e.valua_java;
 import com.gamerker.io.e.valua_java.controllersPack.AppController;
+
 /**
  *
  * @author hp
@@ -14,8 +15,10 @@ import com.gamerker.io.e.valua_java.controllersPack.AppController;
  */
 public class EVALUA_JAVA {
     public static void main(String[] args) {
-        // instancia y ejecuta el controlador principal
+        // Consola
         AppController app = new AppController();
         app.run();
+        // Grafico
+        AppLauncher.main(args);
     }
 }

@@ -91,7 +91,7 @@ public class AppController {
     }
 
     // Guardar sesión activa
-    private void saveActiveSession() {
+    public void saveActiveSession() {
         try {
             JsonObject session = new JsonObject();
             session.addProperty("activeUsername", currentUser.getUsername());
@@ -104,10 +104,9 @@ public class AppController {
     }
 
     // Limpiar sesión al cerrar sesión
-    private void clearActiveSession() {
+    public void clearActiveSession() {
         try {
             Files.deleteIfExists(Paths.get(SESSION_FILE));
-            loginMenu();
         } catch (Exception e) {
             // Ignorar error
         }
@@ -135,6 +134,12 @@ public class AppController {
         while (true) {
             if (currentUser == null) {
                 loginMenu();
+                // Después de loginMenu(), si currentUser sigue siendo null, 
+                // significa que el usuario eligió "Salir"
+                if (currentUser == null) {
+                    System.out.println("¡Hasta pronto!");
+                    break;
+                }
             } else {
                 billing.startSession(currentUser.getUsername());
                 userMenu();
@@ -144,14 +149,25 @@ public class AppController {
                     transactions.add(sessionCharge);
                     saveAll();
                 }
+                currentUser = null;
             }
         }
     }
     
-    private void registerNewUser() {
+    private void registerNewUser() {        
         System.out.print("Rol (student/teacher/admin) [Deje vacío para Estudiante]: ");
         String role = scanner.nextLine().trim().toLowerCase();
         if (role.isEmpty()) role = "student";
+        
+        // ===== CÓDIGO SECRETO PARA ADMIN =====
+        if ("admin".equals(role)) {
+            System.out.print("Código secreto de administrador: ");
+            String codigo = scanner.nextLine().trim();
+            if (!"3-V4LU4D0R3S".equals(codigo)) {
+                System.out.println("Código incorrecto. Registro cancelado.");
+                return;
+            }
+        }
 
         System.out.print("Usuario: ");
         String username = scanner.nextLine().trim();
@@ -183,16 +199,16 @@ public class AppController {
 
         if (!password.isEmpty()) {
             newUser.setPassword(password);
+        } else {
+            newUser.setPassword("password");
+            System.out.print("Contraseña por defecto: 'password'");
         }
-
-        // === TARJETA DE BIENVENIDA ===
-        RechargeCard welcomeCard = recharge.generateWelcomeCard(newUser);
 
         // Aplicar el saldo de la tarjeta al usuario
         Transaction welcomeTransaction = billing.registerPayment(
             newUser.getUsername(),
-            welcomeCard.getAmount(),
-            "Saldo inicial de bienvenida - " + welcomeCard.getCardNumber()
+            5000,
+            "Saldo inicial de bienvenida"
         );
         newUser.addTransaction(welcomeTransaction);
 
@@ -201,46 +217,53 @@ public class AppController {
         saveAll();
 
         System.out.println("\n¡Usuario creado con éxito!");
-        System.out.println("→ Saldo inicial: " + welcomeCard.getFormattedAmount());
-        System.out.println("→ Tarjeta de bienvenida: " + welcomeCard.getCardNumber());
+        System.out.println("- Saldo inicial de regalo: $5000");
         System.out.println("Ya puedes iniciar sesión.");
+        loginMenu();
     }
 
     private void loginMenu() {
-        System.out.print("\n1. Ingresar\n2. Registrarse\n3. Salir\nOpción: ");
-        String opt = scanner.nextLine();
+        while (true) {
+            System.out.print("\n1. Ingresar\n2. Registrarse\n3. Salir\nOpción (1-3): ");
+            String opt = scanner.nextLine();
 
-        switch (opt) {
-            case "1" -> {
-                System.out.print("Usuario: ");
-                String user = scanner.nextLine().trim();
-                System.out.print("Contraseña: ");
-                String pass = scanner.nextLine();
+            switch (opt) {
+                case "1" -> {
+                    System.out.print("Usuario: ");
+                    String user = scanner.nextLine().trim();
+                    System.out.print("Contraseña: ");
+                    String pass = scanner.nextLine();
 
-                currentUser = users.stream()
-                        .filter(u -> u.getUsername().equalsIgnoreCase(user))
-                        .filter(u -> u.verifyPassword(pass))
-                        .findFirst()
-                        .orElse(null);
+                    currentUser = users.stream()
+                            .filter(u -> u.getUsername().equalsIgnoreCase(user))
+                            .filter(u -> u.verifyPassword(pass))
+                            .findFirst()
+                            .orElse(null);
 
-                if (currentUser != null) {
-                    System.out.println("\n¡Bienvenido, " + currentUser.getDisplayName() + "!");
-                    saveActiveSession(); // Guardamos sesión al iniciar
-                    return;
-                } else {
-                    System.out.println("Credenciales incorrectas.");
+                    if (currentUser != null) {
+                        System.out.println("\n¡Bienvenido, " + currentUser.getDisplayName() + "!");
+                        saveActiveSession(); // Guardamos sesión al iniciar
+                        return;
+                    } else {
+                        System.out.println("Credenciales incorrectas.");
+                    }
                 }
+                case "2" -> registerNewUser(); 
+                case "3" -> {
+                    System.out.println("¡Hasta pronto!");
+                    System.exit(0);
+                }
+                default -> System.out.println("Opción no válida. Intenta de nuevo.");
             }
-            case "2" -> registerNewUser(); 
-            case "3" -> {
-                System.out.println("¡Hasta pronto!");
-                System.exit(0);
-            }
-            default -> System.out.println("Opción no válida. Intenta de nuevo.");
         }
     }
 
     private void userMenu() {
+        if (currentUser == null) {
+            loginMenu();
+            return;
+        }
+        
         while (true) {
             // Verificar saldo negativo al inicio del menú
             if (currentUser.getBalance() < -1000) { // Umbral configurable
@@ -249,8 +272,11 @@ public class AppController {
                 System.out.println("No puedes realizar pruebas hasta recargar saldo.\n");
             }
 
+            // MOSTRAR ESTADO DE ALMACENAMIENTO
+            System.out.println("\n" + getStorageStatus());
+            
             System.out.println("\n=== Menú Principal - " + currentUser.getDisplayName() + " ===");
-            System.out.println(RechargeController.getBalanceStatus(currentUser));
+            System.out.println(recharge.getBalanceStatus(currentUser));
 
             // Menú base para todos
             System.out.println("0. Cerrar sesión");
@@ -261,18 +287,19 @@ public class AppController {
             System.out.println("5. Generar factura del día");
             System.out.println("6. Ver ranking global");
             System.out.println("7. Ver ranking por prueba");
+            System.out.println("8. Vaciar almacenamiento");
 
             // Opciones exclusivas para profesor y admin
             if ("teacher".equals(currentUser.getRole()) || "admin".equals(currentUser.getRole())) {
-                System.out.println("8. Crear nueva prueba");
+                System.out.println("9. Crear nueva prueba");
                 if ("admin".equals(currentUser.getRole())) {
-                    System.out.println("9. Gestionar usuarios");
+                    System.out.println("10. Gestionar usuarios");
                     System.out.print("Opción: ");
                 } else {
-                    System.out.print("Opción (1-8): ");
+                    System.out.print("Opción (1-9): ");
                 }
             } else {
-                System.out.print("Opción (1-7): ");
+                System.out.print("Opción (1-8): ");
             }
 
             String opt = scanner.nextLine().trim();
@@ -296,16 +323,17 @@ public class AppController {
                 case "5" -> generateDailyInvoice();
                 case "6" -> showGlobalRanking();
                 case "7" -> showTestRanking();
+                case "8" -> clearUserStorage();
 
                 // === OPCIONES EXCLUSIVAS PROFESOR/ADMIN ===
-                case "8" -> {
+                case "9" -> {
                     if ("teacher".equals(currentUser.getRole()) || "admin".equals(currentUser.getRole())) {
                         createTest();
                     } else {
                         System.out.println("Opción no válida.");
                     }
                 }
-                case "9" -> {
+                case "10" -> {
                     if ("admin".equals(currentUser.getRole())) {
                         manageUsersMenu();
                     } else {
@@ -324,7 +352,7 @@ public class AppController {
         transactions = db.loadTransactions();
     }
 
-    private void saveAll() {
+    public void saveAll() {
         db.saveUsers(users);
         db.saveTests(tests);
         db.saveResults(results);
@@ -359,6 +387,29 @@ public class AppController {
     }
 
     private void takeTest() {
+        // VERIFICAR ESPACIO DE ALMACENAMIENTO PRIMERO
+        if (!hasStorageSpace()) {
+            System.out.println("\nNO PUEDES REALIZAR MÁS PRUEBAS");
+            System.out.println(getStorageStatus());
+            System.out.println("\nOpciones:");
+            System.out.println("1. Vaciar almacenamiento (archivar resultados viejos)");
+            System.out.println("2. Cancelar");
+            System.out.print("Elige una opción: ");
+
+            String opt = scanner.nextLine().trim();
+            if (opt.equals("1")) {
+                clearUserStorage();
+                // Después de vaciar, verificar de nuevo
+                if (!hasStorageSpace()) {
+                    System.out.println("Aún no hay espacio suficiente. Vuelve a intentarlo.");
+                    return;
+                }
+            } else {
+                return;
+            }
+        }
+
+        // Resto del método takeTest() sigue igual...
         if (tests.isEmpty()) {
             System.out.println("No hay pruebas disponibles.");
             return;
@@ -385,9 +436,9 @@ public class AppController {
             }
 
             // Verificar saldo suficiente (incluyendo crédito)
-            if (!RechargeController.hasSufficientBalance(currentUser, testPrice)) {
+            if (!recharge.hasSufficientBalance(currentUser, testPrice)) {
                 System.out.println("\nSALDO INSUFICIENTE para realizar esta prueba.");
-                System.out.println(RechargeController.getBalanceStatus(currentUser));
+                System.out.println(recharge.getBalanceStatus(currentUser));
                 System.out.println("Debe recargar antes de continuar.");
                 return;
             }
@@ -471,33 +522,328 @@ public class AppController {
     }
 
     private void viewResults() {
+        // Obtener solo resultados NO archivados del usuario actual, ordenados por fecha descendente
         List<Result> myResults = results.stream()
                 .filter(r -> r.getStudentUsername().equals(currentUser.getUsername()))
-                .sorted((a, b) -> Double.compare(b.getPercentage(), a.getPercentage()))
+                .filter(r -> !r.isArchived()) // Excluir archivados
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp())) // Más recientes primero
+                .limit(5) // Limitar a los 5 más recientes
                 .toList();
 
         if (myResults.isEmpty()) {
-            System.out.println("Aún no has realizado ninguna prueba.");
+            System.out.println("\nNo tienes resultados recientes.");
+            System.out.println("Los resultados archivados no se muestran aquí, pero permanecen en estadísticas.");
             return;
         }
 
-        System.out.println("\n=== TUS RESULTADOS ===");
+        System.out.println("\n=== TUS RESULTADOS RECIENTES (máx. 10) ===");
+        System.out.println("(Resultados archivados no se muestran aquí)\n");
+
         for (int i = 0; i < myResults.size(); i++) {
             Result r = myResults.get(i);
-            System.out.printf("%d. %s → %d/%d (%.2f%%)%n",
-                    i + 1, r.getTestTitle(), r.getScore(), r.getTotal(), r.getPercentage());
+            // Formato: "1. Prueba Lógica → 8/10 (80.00%) - 15/11/2025 14:30"
+            System.out.printf("%d. %s → %d/%d (%.2f%%) - %s%n",
+                    i + 1, 
+                    r.getTestTitle(), 
+                    r.getScore(), 
+                    r.getTotal(), 
+                    r.getPercentage(),
+                    r.getTimestamp().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
         }
+
+        // Mostrar contador de archivados si existen
+        long archivedCount = results.stream()
+                .filter(r -> r.getStudentUsername().equals(currentUser.getUsername()))
+                .filter(r -> r.isArchived())
+                .count();
+
+        if (archivedCount > 0) {
+            System.out.printf("\nTienes %d resultados archivados (no visibles).%n", archivedCount);
+            System.out.println("Usa la opción 8 para gestionar el almacenamiento.");
+        }
+    }
+    
+    /**
+    * Parsea selección de índices desde string (ej: "1,3,5" o "2-4")
+    * @param input Entrada del usuario
+    * @param maxSize Número máximo de índices disponibles
+    * @return Lista de índices válidos (1-based) o lista vacía si inválido
+    */
+    private List<Integer> parseIndexSelection(String input, int maxSize) {
+        List<Integer> indices = new ArrayList<>();
+        input = input.replaceAll("\\s", ""); // Eliminar espacios
+
+        try {
+            String[] parts = input.split(",");
+            for (String part : parts) {
+                if (part.contains("-")) {
+                    // Rango (ej: 2-5)
+                    String[] range = part.split("-");
+                    if (range.length != 2) return List.of(); // Inválido
+
+                    int start = Integer.parseInt(range[0]);
+                    int end = Integer.parseInt(range[1]);
+
+                    if (start <= 0 || end > maxSize || start > end) return List.of();
+
+                    for (int i = start; i <= end; i++) {
+                        if (!indices.contains(i)) indices.add(i);
+                    }
+                } else {
+                    // Índice individual
+                    int idx = Integer.parseInt(part);
+                    if (idx <= 0 || idx > maxSize) return List.of();
+                    if (!indices.contains(idx)) indices.add(idx);
+                }
+            }
+        } catch (NumberFormatException e) {
+            return List.of(); // Error de formato
+        }
+
+        return indices.stream().sorted().toList();
+    }
+
+    /**
+    * Obtiene el número de resultados activos (no archivados) del usuario actual
+    */
+    private int getUserActiveResultsCount() {
+        return (int) results.stream()
+                .filter(r -> r.getStudentUsername().equals(currentUser.getUsername()))
+                .filter(r -> !r.isArchived())
+                .count();
+    }
+
+    /**
+     * Verifica si hay espacio suficiente para una nueva prueba
+     */
+    private boolean hasStorageSpace() {
+        int activeCount = getUserActiveResultsCount();
+        return activeCount < 5;
+    }
+
+    private String getStorageStatus() {
+        int activeCount = getUserActiveResultsCount();
+        int maxResults = 5;
+        int usedMB = activeCount * 5;
+        int totalMB = maxResults * 5;
+
+        if (activeCount >= maxResults) {
+            return String.format("ALMACENAMIENTO LLENO: %d/%d MB usados (%d/%d resultados). " +
+                               "Usa la opción 8 para archivar resultados.", usedMB, totalMB, activeCount, maxResults);
+        } else {
+            return String.format("Almacenamiento: %d/%d MB usados (%d de %d resultados)", 
+                               usedMB, totalMB, activeCount, maxResults);
+        }
+    }
+
+    /**
+     * Método para vaciar almacenamiento (archivar resultados viejos)
+     */
+    private void clearUserStorage() {
+        System.out.println("\n=== VACIAR ALMACENAMIENTO DE RESULTADOS ===");
+        System.out.println("Cada resultado ocupa 5MB de espacio (Límite: 25MB = 5 resultados).");
+
+        // Obtener resultados ACTIVOS del usuario
+        List<Result> activeResults = results.stream()
+                .filter(r -> r.getStudentUsername().equals(currentUser.getUsername()))
+                .filter(r -> !r.isArchived())
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .toList();
+
+        if (activeResults.isEmpty()) {
+            System.out.println("No tienes resultados para archivar.");
+            return;
+        }
+
+        // Mostrar resultados numerados
+        System.out.println("\nResultados activos:");
+        for (int i = 0; i < activeResults.size(); i++) {
+            Result r = activeResults.get(i);
+            System.out.printf("%d. %s → %d/%d (%.2f%%) - %s%n",
+                    i + 1, r.getTestTitle(), r.getScore(), r.getTotal(), r.getPercentage(),
+                    r.getTimestamp().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        }
+
+        // Pedir selección
+        System.out.println("\nIngrese los números de los resultados a archivar (ej: 1,3,5 o 2-4) o '0' para cancelar:");
+        System.out.print("> ");
+        String input = scanner.nextLine().trim();
+
+        if (input.equals("0") || input.isEmpty()) {
+            System.out.println("Operación cancelada.");
+            return;
+        }
+
+        // Parsear selección
+        List<Integer> indicesToArchive = parseIndexSelection(input, activeResults.size());
+
+        if (indicesToArchive.isEmpty()) {
+            System.out.println("Selección inválida. Operación cancelada.");
+            return;
+        }
+
+        // Confirmar
+        System.out.println("\nSe archivarán " + indicesToArchive.size() + " resultados:");
+        for (int idx : indicesToArchive) {
+            Result r = activeResults.get(idx - 1);
+            System.out.printf("  - %s (%d/%d)%n", r.getTestTitle(), r.getScore(), r.getTotal());
+        }
+        System.out.print("\n¿Confirmar? (s/n): ");
+
+        if (!scanner.nextLine().trim().equalsIgnoreCase("s")) {
+            System.out.println("Operación cancelada.");
+            return;
+        }
+
+        // Archivar seleccionados
+        for (int idx : indicesToArchive) {
+            Result r = activeResults.get(idx - 1);
+            r.setArchived(true);
+        }
+
+        saveAll();
+        System.out.println("Almacenamiento vaciado. " + indicesToArchive.size() + " resultados archivados.");
+        System.out.println("Espacio liberado: " + (indicesToArchive.size() * 5) + " MB");
     }
 
     private void rechargeBalance() {
         System.out.println("\n=== RECARGA DE SALDO ===");
-        System.out.print("Código de tarjeta (EVAX-XXXX-XXXX-XXXX-XXXX): ");
+
+        boolean hasPersonalCard = recharge.hasPersonalCard(currentUser);
+
+        if (hasPersonalCard) {
+            System.out.println("Tienes tarjeta personal activa");
+            System.out.println("1. Recargar con tarjeta personal");
+            System.out.println("2. Ver mi tarjeta personal");
+            System.out.println("3. Cambiar de tarjeta personal ($7.500)"); // NUEVO
+            System.out.print("Opción: ");
+
+            String opt = scanner.nextLine().trim();
+            switch (opt) {
+                case "1" -> processPersonalRecharge();
+                case "2" -> showPersonalCard();
+                case "3" -> changePersonalCard(); // NUEVO
+                default -> System.out.println("Opción inválida");
+            }
+        } else {
+            System.out.println("No tienes tarjeta personal");
+            System.out.println("1. Migrar tarjeta de bienvenida a personal");
+            
+            boolean hasWelcome = recharge.findActiveWelcomeCard(
+                    "EVAX-WELCOME-" + currentUser.getUsername().toUpperCase()) != null;
+
+            if (hasWelcome) {
+                System.out.println("2. Usar tarjeta de bienvenida (una sola vez)");
+            }
+            
+            System.out.print("Opción: ");
+
+            String opt = scanner.nextLine().trim();
+            switch (opt) {
+                case "1" -> migrateToPersonalCard();
+                case "2" -> processWelcomeCardRecharge();
+                default -> System.out.println("Opción inválida");
+            }
+        }
+    }
+
+    private void migrateToPersonalCard() {
+        System.out.println("\n=== MIGRAR A TARJETA PERSONAL ===");
+        System.out.println("Costo de migración: $7.500");
+        System.out.println("Esto eliminará tu tarjeta de bienvenida y te permitirá recargar en el futuro");
+        System.out.print("Ingresa tu contraseña: ");
+        String password = scanner.nextLine();
+
+        try {
+            Transaction migration = recharge.migrateToPersonalCard(currentUser, password);
+            currentUser.addTransaction(migration);
+            transactions.add(migration);
+            saveAll();
+
+            System.out.println("\nMigración exitosa");
+            System.out.println("Se cobró: $" + String.format("%,.0f", migration.getAmount()));
+            System.out.println("Nuevo saldo: $" + String.format("%,.0f", currentUser.getBalance()));
+            System.out.println("Tu tarjeta personal está lista para futuras recargas");
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void processPersonalRecharge() {
+        System.out.println("\n=== RECARGAR CON TARJETA PERSONAL ===");
+
+        // Mostrar tarjeta personal
+        RechargeCard personalCard = recharge.getPersonalCard(currentUser).orElse(null);
+
+        if (personalCard != null) {
+            System.out.println("Tu tarjeta personal: " + personalCard.getCardNumber());
+        }
+
+        System.out.print("Ingresa el código de tu tarjeta personal: ");
+        String code = scanner.nextLine().trim();
+        System.out.print("Referencia (ingrese un número de referencia): ");
+        String ref = scanner.nextLine().trim();
+        System.out.print("Confirma tu contraseña: ");
+        String password = scanner.nextLine();
+
+        try {
+            Transaction payment = recharge.rechargePersonalCard(currentUser, code, ref, password);
+            currentUser.addTransaction(payment);
+            transactions.add(payment);
+            saveAll();
+
+            System.out.println("\nRECARGA EXITOSA");
+            System.out.println("Monto recargado: $" + String.format("%,.0f", payment.getAmount()));
+            System.out.println("Nuevo saldo: $" + String.format("%,.0f", currentUser.getBalance()));
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+    
+    // Método nuevo para cambiar tarjeta
+    private void changePersonalCard() {
+        System.out.println("\n=== CAMBIAR TARJETA PERSONAL ===");
+        System.out.println("Costo del cambio: $7.500");
+        System.out.print("Ingresa tu contraseña: ");
+        String password = scanner.nextLine();
+
+        try {
+            Transaction change = recharge.changePersonalCard(currentUser, password);
+            currentUser.addTransaction(change);
+            transactions.add(change);
+            saveAll();
+
+            System.out.println("\nTarjeta personal cambiada exitosamente");
+            System.out.println("Nueva tarjeta: " + 
+                    recharge.getPersonalCard(currentUser).map(RechargeCard::getCardNumber).orElse("Error"));
+        } catch (Exception e) {
+            System.out.println("Error: " + e.getMessage());
+        }
+    }
+
+    private void showPersonalCard() {
+        RechargeCard personalCard = recharge.getPersonalCard(currentUser).orElse(null);
+
+        if (personalCard != null) {
+            System.out.println("\n=== TU TARJETA PERSONAL ===");
+            System.out.println("Número: " + personalCard.getCardNumber());
+            System.out.println("Estado: Activa");
+            System.out.println("Último uso: " + (personalCard.getUsedAt() != null ? 
+                    personalCard.getUsedAt().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")) : "Nunca"));
+        } else {
+            System.out.println("No tienes tarjeta personal activa");
+        }
+    }
+
+    private void processWelcomeCardRecharge() {
+        System.out.println("\n=== USAR TARJETA DE BIENVENIDA ===");
+        System.out.print("Código de tarjeta (EVAX-WELCOME-...): ");
         String code = scanner.nextLine().trim();
         System.out.print("Referencia (opcional): ");
         String ref = scanner.nextLine().trim();
 
         try {
-            Transaction payment = recharge.processRecharge(currentUser, code, ref);
+            Transaction payment = recharge.processWelcomeCardRecharge(currentUser, code, ref);
             currentUser.addTransaction(payment);
             transactions.add(payment);
             saveAll();
@@ -505,6 +851,7 @@ public class AppController {
             System.out.println("\nRECARGA EXITOSA");
             System.out.println("Monto: $" + String.format("%,.0f", payment.getAmount()));
             System.out.println("Nuevo saldo: $" + String.format("%,.0f", currentUser.getBalance()));
+            System.out.println("\nRecuerda: puedes migrar a tarjeta personal desde el menú de recargas");
         } catch (Exception e) {
             System.out.println("Error: " + e.getMessage());
         }
@@ -901,4 +1248,38 @@ public class AppController {
         }
         System.out.println();
     }
+    
+    // getters auxiliares
+    public List<Transaction> getTransactions() {
+        return currentUser.getTransactions();
+    }
+    
+    public List<User> getUsers() {
+        return db.loadUsers();
+    }
+    
+    public List<Test> getTests() {
+        return db.loadTests();
+    }
+    
+    public List<Result> getResults() {
+        return db.loadResults();
+    }
+
+    public BillingController getBillingController() {
+        return billing;
+    }
+    
+    public RechargeController getRechargeController() {
+        return recharge;
+    }
+    
+    public DBController getDBController() {
+        return db;
+    }
+    
+    // setters
+    public void setCurrentUser(User currentUser) {
+        this.currentUser = currentUser;
+    }   
 }
