@@ -69,17 +69,17 @@ public class StorageManagerDialog extends JDialog {
         panel.setOpaque(false);
         
         JLabel titleLabel = new JLabel("Gestión de Espacio de Almacenamiento");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
+        titleLabel.setFont(new Font("Verdana", Font.BOLD, 18));
         titleLabel.setForeground(Color.WHITE);
         panel.add(titleLabel);
         
         storageLabel = new JLabel();
-        storageLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        storageLabel.setForeground(Color.YELLOW);
+        storageLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
+        storageLabel.setForeground(Color.GRAY);
         panel.add(storageLabel);
         
-        JLabel legendLabel = new JLabel("  📌 Los archivados no aparecen en 'Mis Resultados' pero sí en rankings");
-        legendLabel.setFont(new Font("Arial", Font.ITALIC, 11));
+        JLabel legendLabel = new JLabel("Los archivados no aparecen en 'Mis Resultados' pero sí en rankings");
+        legendLabel.setFont(new Font("Verdana", Font.ITALIC, 11));
         legendLabel.setForeground(Color.BLACK);
         panel.add(legendLabel);
         
@@ -93,7 +93,7 @@ public class StorageManagerDialog extends JDialog {
             BorderFactory.createLineBorder(Color.WHITE, 1),
             "Resultados Activos (click para seleccionar)",
             0, 0,
-            new Font("Arial", Font.BOLD, 12),
+            new Font("Verdana", Font.BOLD, 12),
             Color.WHITE
         ));
         
@@ -111,9 +111,9 @@ public class StorageManagerDialog extends JDialog {
         };
         
         resultsTable = new JTable(tableModel);
-        resultsTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        resultsTable.setFont(new Font("Verdana", Font.PLAIN, 12));
         resultsTable.setRowHeight(25);
-        resultsTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 12));
+        resultsTable.getTableHeader().setFont(new Font("Verdana", Font.BOLD, 12));
         resultsTable.getColumnModel().getColumn(0).setMaxWidth(30);
         resultsTable.getColumnModel().getColumn(1).setMaxWidth(50);
         
@@ -144,12 +144,15 @@ public class StorageManagerDialog extends JDialog {
         archiveButton = new JButton("📦 Archivar Seleccionados");
         archiveButton.setBackground(COLOR_WARNING);
         archiveButton.setForeground(Color.BLACK);
+        archiveButton.setBorderPainted(false);
+        archiveButton.setContentAreaFilled(true);
+        archiveButton.setOpaque(true);
         archiveButton.setEnabled(false);
         archiveButton.addActionListener(e -> archiveSelected());
         panel.add(archiveButton);
         
         statusLabel = new JLabel(" ");
-        statusLabel.setFont(new Font("Arial", Font.ITALIC, 12));
+        statusLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
         statusLabel.setForeground(Color.WHITE);
         panel.add(statusLabel);
         

@@ -94,7 +94,7 @@ public class ManageUsersDialog extends JDialog {
         // Contador de usuarios
         userCountLabel = new JLabel("Total: 0 usuarios");
         userCountLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
-        userCountLabel.setForeground(Color.YELLOW);
+        userCountLabel.setForeground(Color.BLACK);
         panel.add(userCountLabel);
         
         return panel;
@@ -164,19 +164,19 @@ public class ManageUsersDialog extends JDialog {
         panel.setOpaque(false);
         
         // Botón Crear Usuario
-        addButton(panel, "➕ Crear Usuario", e -> createUser(), COLOR_BOTON);
+        addButton(panel, "Crear Usuario", e -> createUser(), COLOR_BOTON);
         
         // Botón Editar Usuario
-        addButton(panel, "✏️ Editar Usuario", e -> editUser(), new Color(23, 162, 184));
+        addButton(panel, "Editar Usuario", e -> editUser(), new Color(23, 162, 184));
         
         // Botón Eliminar Usuario
-        addButton(panel, "🗑️ Eliminar Usuario", e -> deleteUser(), new Color(220, 53, 69));
+        addButton(panel, "Eliminar Usuario", e -> deleteUser(), new Color(220, 53, 69));
         
         // Botón Ver Detalles
-        addButton(panel, "👁️ Ver Detalles", e -> viewUserDetails(), new Color(111, 66, 193));
+        addButton(panel, "Ver Detalles", e -> viewUserDetails(), new Color(111, 66, 193));
         
         // Botón Refrescar
-        addButton(panel, "🔄 Refrescar", e -> loadUsers(), COLOR_BOTON);
+        addButton(panel, "Refrescar", e -> loadUsers(), COLOR_BOTON);
         
         // Etiqueta de estado
         statusLabel = new JLabel(" ");
@@ -210,13 +210,24 @@ public class ManageUsersDialog extends JDialog {
     }
     
     private void loadUsers() {
+        // Obtener usuarios directamente del controlador
         List<User> users = appController.getUsers();
         tableModel.setRowCount(0);
-        
+
         for (User user : users) {
-            String estado = user.getBalance() < -1000 ? "⚠️ DEUDA" : 
-                           user.getBalance() < 0 ? "⚠️ NEGATIVO" : "✅ ACTIVO";
-            
+            String estado;
+            if (user.getBalance() < -1000) {
+                estado = "DEUDA";
+            } else if (user.getBalance() < 0) {
+                estado = "NEGATIVO";
+            } else if (user.getBalance() == 0) {
+                estado = "CERO";
+            } else if (user.getBalance() < 10000) {
+                estado = "BAJO";
+            } else {
+                estado = "ALTO";
+            }
+
             tableModel.addRow(new Object[]{
                 user.getUsername(),
                 user.getUsername(),
@@ -226,13 +237,19 @@ public class ManageUsersDialog extends JDialog {
                 estado
             });
         }
-        
+
         userCountLabel.setText("Total: " + users.size() + " usuarios");
     }
     
     private void createUser() {
-        new UserDialog(this, null, appController).setVisible(true);
-        loadUsers();
+        UserDialog dialog = new UserDialog(this, null, appController);
+        dialog.setVisible(true);
+
+        if (dialog.isConfirmed()) {
+            // Recargar datos desde el controlador
+            loadUsers();
+            showSuccess("Usuario creado exitosamente");
+        }
     }
     
     private void editUser() {
@@ -241,17 +258,21 @@ public class ManageUsersDialog extends JDialog {
             showError("Selecciona un usuario para editar");
             return;
         }
-        
+
         String username = (String) tableModel.getValueAt(selectedRow, 0);
         User user = appController.getUsers().stream()
             .filter(u -> u.getUsername().equals(username))
             .findFirst()
             .orElse(null);
-        
+
         if (user != null) {
-            new UserDialog(this, user, appController).setVisible(true);
-            loadUsers();
-            showSuccess("Usuario actualizado");
+            UserDialog dialog = new UserDialog(this, user, appController);
+            dialog.setVisible(true);
+
+            if (dialog.isConfirmed()) {
+                loadUsers();
+                showSuccess("Usuario actualizado");
+            }
         } else {
             showError("Usuario no encontrado");
         }
@@ -263,29 +284,35 @@ public class ManageUsersDialog extends JDialog {
             showError("Selecciona un usuario para eliminar");
             return;
         }
-        
+
         String username = (String) tableModel.getValueAt(selectedRow, 0);
-        
+
         // No permitir eliminarse a sí mismo
         if (username.equals(currentUser.getUsername())) {
             showError("No puedes eliminarte a ti mismo");
             return;
         }
-        
+
         int confirm = JOptionPane.showConfirmDialog(this,
             "⚠️ ¿ELIMINAR usuario '" + username + "'?\nEsta acción es irreversible y eliminará también sus resultados.",
             "Confirmar Eliminación",
             JOptionPane.YES_NO_OPTION,
             JOptionPane.ERROR_MESSAGE);
-        
+
         if (confirm == JOptionPane.YES_OPTION) {
-            // Eliminar usuario
+            // Usar el AppController directamente para eliminar
             appController.getUsers().removeIf(u -> u.getUsername().equals(username));
-            
-            // Eliminar resultados del usuario
+
+            // Eliminar resultados del usuario usando el controlador principal
             appController.getResults().removeIf(r -> r.getStudentUsername().equals(username));
-            
+
+            // Guardar cambios en el controlador principal
             appController.saveAll();
+
+            // Forzar recarga desde el controlador
+            appController.setUsers(appController.getUsers()); // Actualizar lista interna
+            appController.setCurrentUser(currentUser); // Mantener usuario actual
+
             loadUsers();
             showSuccess("Usuario eliminado correctamente");
         }
@@ -297,52 +324,94 @@ public class ManageUsersDialog extends JDialog {
             showError("Selecciona un usuario para ver detalles");
             return;
         }
-        
+
         String username = (String) tableModel.getValueAt(selectedRow, 0);
         User user = appController.getUsers().stream()
             .filter(u -> u.getUsername().equals(username))
             .findFirst()
             .orElse(null);
-        
+
         if (user == null) {
             showError("Usuario no encontrado");
             return;
         }
-        
+
+        // Calcular estadísticas adicionales
+        long totalResults = appController.getResults().stream()
+            .filter(r -> r.getStudentUsername().equals(username))
+            .count();
+
+        long activeResults = appController.getResults().stream()
+            .filter(r -> r.getStudentUsername().equals(username))
+            .filter(r -> !r.isArchived())
+            .count();
+
+        double avgScore = appController.getResults().stream()
+            .filter(r -> r.getStudentUsername().equals(username))
+            .mapToDouble(r -> r.getPercentage())
+            .average()
+            .orElse(0.0);
+
         // Construir mensaje detallado
         StringBuilder details = new StringBuilder();
-        details.append("<html><h2>Detalles del Usuario</h2>");
-        details.append("<table style='font-size:12px;'>");
-        details.append("<tr><td><b>Usuario:</b></td><td>").append(user.getUsername()).append("</td></tr>");
-        details.append("<tr><td><b>Nombre:</b></td><td>").append(user.getDisplayName()).append("</td></tr>");
-        details.append("<tr><td><b>Rol:</b></td><td>").append(user.getRole().toUpperCase()).append("</td></tr>");
-        details.append("<tr><td><b>Saldo:</b></td><td>$").append(String.format("%,.2f", user.getBalance())).append("</td></tr>");
-        details.append("<tr><td><b>Transacciones:</b></td><td>").append(user.getTransactions().size()).append("</td></tr>");
+        details.append("<html><body style='font-family: Verdana; font-size: 12px;'>");
+
+        details.append("<h2 style='color: #333;'>👤 Detalles del Usuario</h2>");
+
+        // Información básica
+        details.append("<table style='width: 100%; border-collapse: collapse;'>");
+        details.append("<tr style='background-color: #f0f0f0;'><td style='padding: 5px; font-weight: bold;'>Usuario:</td><td style='padding: 5px;'>").append(user.getUsername()).append("</td></tr>");
+        details.append("<tr><td style='padding: 5px; font-weight: bold;'>Nombre:</td><td style='padding: 5px;'>").append(user.getDisplayName()).append("</td></tr>");
+        details.append("<tr style='background-color: #f0f0f0;'><td style='padding: 5px; font-weight: bold;'>Rol:</td><td style='padding: 5px;'><b>").append(user.getRole().toUpperCase()).append("</b></td></tr>");
+        details.append("<tr><td style='padding: 5px; font-weight: bold;'>Saldo:</td><td style='padding: 5px; color: ").append(user.getBalance() < 0 ? "red" : "green").append(";'><b>$").append(String.format("%,.2f", user.getBalance())).append("</b></td></tr>");
         details.append("</table>");
-        
+
+        // Estadísticas
+        details.append("<h3 style='color: #333; margin-top: 15px;'>📊 Estadísticas</h3>");
+        details.append("<table style='width: 100%; border-collapse: collapse;'>");
+        details.append("<tr style='background-color: #f0f0f0;'><td style='padding: 5px;'>Total Pruebas:</td><td style='padding: 5px;'>").append(totalResults).append("</td></tr>");
+        details.append("<tr><td style='padding: 5px;'>Pruebas Activas:</td><td style='padding: 5px;'>").append(activeResults).append("</td></tr>");
+        details.append("<tr style='background-color: #f0f0f0;'><td style='padding: 5px;'>Promedio:</td><td style='padding: 5px; color: ").append(avgScore >= 70 ? "green" : avgScore >= 60 ? "orange" : "red").append(";'><b>").append(String.format("%.2f%%", avgScore)).append("</b></td></tr>");
+        details.append("<tr><td style='padding: 5px;'>Transacciones:</td><td style='padding: 5px;'>").append(user.getTransactions().size()).append("</td></tr>");
+        details.append("</table>");
+
         // Últimos movimientos
-        details.append("<h3>Últimos 5 Movimientos:</h3>");
-        details.append("<table style='font-size:11px;'>");
-        details.append("<tr><th>Fecha</th><th>Concepto</th><th>Monto</th></tr>");
-        
-        user.getTransactions().stream()
-            .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
-            .limit(5)
-            .forEach(t -> details.append(String.format("<tr><td>%s</td><td>%s</td><td>%s$%,.0f</td></tr>",
-                t.getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM")),
-                t.getConcept(),
-                "CHARGE".equals(t.getType()) ? "-" : "+",
-                t.getAmount())));
-        
-        details.append("</table>");
-        details.append("</html>");
-        
-        JOptionPane.showMessageDialog(this, new JLabel(details.toString()), 
-            "Detalles de " + user.getUsername(), JOptionPane.INFORMATION_MESSAGE);
+        if (!user.getTransactions().isEmpty()) {
+            details.append("<h3 style='color: #333; margin-top: 15px;'>💳 Últimos 5 Movimientos</h3>");
+            details.append("<table style='width: 100%; border-collapse: collapse; border: 1px solid #ddd;'>");
+            details.append("<tr style='background-color: #4CAF50; color: white;'><th style='padding: 5px; text-align: left;'>Fecha</th><th style='padding: 5px; text-align: left;'>Concepto</th><th style='padding: 5px; text-align: right;'>Monto</th></tr>");
+
+            user.getTransactions().stream()
+                .sorted((a, b) -> b.getTimestamp().compareTo(a.getTimestamp()))
+                .limit(5)
+                .forEach(t -> {
+                    String color = t.getAmount() > 0 ? "green" : "red";
+                    String sign = t.getAmount() > 0 ? "+" : "";
+                    details.append(String.format("<tr><td style='padding: 5px; border-bottom: 1px solid #ddd;'>%s</td><td style='padding: 5px; border-bottom: 1px solid #ddd;'>%s</td><td style='padding: 5px; border-bottom: 1px solid #ddd; text-align: right; color: %s;'><b>%s$%,.0f</b></td></tr>",
+                        t.getTimestamp().format(java.time.format.DateTimeFormatter.ofPattern("dd/MM HH:mm")),
+                        t.getConcept(),
+                        color,
+                        sign,
+                        Math.abs(t.getAmount())));
+                });
+
+            details.append("</table>");
+        }
+
+        details.append("</body></html>");
+
+        JEditorPane editorPane = new JEditorPane("text/html", details.toString());
+        editorPane.setEditable(false);
+        editorPane.setPreferredSize(new Dimension(500, 400));
+
+        JScrollPane scrollPane = new JScrollPane(editorPane);
+
+        JOptionPane.showMessageDialog(this, scrollPane, 
+            "👤 Detalles de " + user.getUsername(), JOptionPane.INFORMATION_MESSAGE);
     }
     
     private void showSuccess(String message) {
-        statusLabel.setText("✅ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_EXITO);
         
         Timer timer = new Timer(3000, e -> statusLabel.setText(" "));
@@ -351,7 +420,7 @@ public class ManageUsersDialog extends JDialog {
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_ERROR);
         
         Timer timer = new Timer(5000, e -> statusLabel.setText(" "));
@@ -525,7 +594,7 @@ class UserDialog extends JDialog {
         String displayName = displayNameField.getText().trim();
         String role = (String) roleCombo.getSelectedItem();
         String password = new String(passwordField.getPassword());
-        
+
         User user;
         if (existingUser == null) {
             // Crear nuevo usuario
@@ -534,16 +603,24 @@ class UserDialog extends JDialog {
                 case "teacher" -> new Teacher(username, displayName);
                 default -> new Student(username, displayName);
             };
-            
+
             // Saldo inicial de bienvenida
             Transaction welcome = new Transaction(username, "Saldo inicial", 5000.0, "PAYMENT");
             user.addTransaction(welcome);
-            appController.getTransactions().add(welcome);
+
+            // Añadir a la lista de transacciones del controlador
+            if (appController.getTransactions() != null) {
+                appController.getTransactions().add(welcome);
+            }
+
+            // Añadir usuario a la lista del controlador
+            appController.getUsers().add(user);
+
         } else {
             // Editar usuario existente
             user = existingUser;
             user.setDisplayName(displayName);
-            
+
             // Cambiar rol si es diferente
             if (!user.getRole().equals(role)) {
                 User newUser = switch (role) {
@@ -554,28 +631,31 @@ class UserDialog extends JDialog {
                 newUser.setBalance(user.getBalance());
                 newUser.setPasswordHash(user.getPasswordHash());
                 newUser.setTransactions(user.getTransactions());
-                
-                appController.getUsers().remove(user);
-                appController.getUsers().add(newUser);
+
+                // Reemplazar en la lista del controlador
+                int index = appController.getUsers().indexOf(existingUser);
+                if (index != -1) {
+                    appController.getUsers().set(index, newUser);
+                }
                 user = newUser;
             }
         }
-        
+
         // Actualizar contraseña si se proporcionó
         if (!password.isEmpty()) {
             user.setPassword(password);
         }
-        
-        if (existingUser == null) {
-            appController.getUsers().add(user);
-        }
-        
+
+        // Guardar cambios en el controlador
         appController.saveAll();
+
+        // Marcar como confirmado
+        confirmed = true;
         dispose();
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(new Color(220, 53, 69));
     }
     

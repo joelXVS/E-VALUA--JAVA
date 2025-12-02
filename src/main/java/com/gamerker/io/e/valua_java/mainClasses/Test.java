@@ -31,6 +31,8 @@ public class Test {
     public int getTotalQuestions() { return questions.size(); }
     public double getPrice() { return price; }
     public void setPrice(double price) { this.price = price > 0 ? price : 5000.0; }
+    public void setTitle(String title) { this.title = title; }
+    
 
     @Override
     public String toString() {

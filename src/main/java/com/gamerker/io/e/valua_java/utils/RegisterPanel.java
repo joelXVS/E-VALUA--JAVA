@@ -88,7 +88,7 @@ public class RegisterPanel extends GradientPanel {
         gbc.gridx = 0; gbc.gridy = 7; gbc.gridwidth = 2;
         JButton registerButton = new JButton("Registrarse");
         registerButton.setFont(new Font("Verdana", Font.BOLD, 16));
-        registerButton.setBackground(new Color(0, 0, 0));
+        registerButton.setBackground(new Color(255, 140, 0));
         registerButton.setForeground(Color.BLACK);
         registerButton.addActionListener(registerCallback);
         add(registerButton, gbc);

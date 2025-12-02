@@ -1,1 +1,59 @@
-[]
+[
+  {
+    "studentUsername": "jangelperea",
+    "testTitle": "Lógica Suprema",
+    "score": 2,
+    "total": 8,
+    "percentage": 25.0,
+    "answers": [
+      "C",
+      "D",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "archived": true,
+    "timestamp": "2025-12-02T11:18:42.423181300"
+  },
+  {
+    "studentUsername": "v",
+    "testTitle": "Mentes Matemáticas",
+    "score": 7,
+    "total": 8,
+    "percentage": 87.5,
+    "answers": [
+      "D",
+      "C",
+      "A",
+      "D",
+      "A",
+      "C",
+      "A",
+      "B"
+    ],
+    "archived": true,
+    "timestamp": "2025-12-02T13:38:00.015489500"
+  },
+  {
+    "studentUsername": "jangelperea",
+    "testTitle": "Lógica Suprema",
+    "score": 1,
+    "total": 8,
+    "percentage": 12.5,
+    "answers": [
+      "C",
+      "",
+      "",
+      "",
+      "",
+      "",
+      "",
+      ""
+    ],
+    "archived": false,
+    "timestamp": "2025-12-02T15:00:55.812108900"
+  }
+]

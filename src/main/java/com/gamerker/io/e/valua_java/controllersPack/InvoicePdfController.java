@@ -116,6 +116,11 @@ public class InvoicePdfController {
      */
     public String generateRechargeInvoice(User user, Transaction rechargeTransaction, 
                                           String cardNumber, String cardType) {
+        File recargasDir = new File(DEST_FOLDER + "/recargas");
+        if (!recargasDir.exists()) {
+            recargasDir.mkdirs();
+        }
+        
         String fileName = String.format("%s/recargas/Recarga_%s_%s.pdf",
                 DEST_FOLDER, user.getUsername(),
                 LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmm")));
@@ -202,7 +207,7 @@ public class InvoicePdfController {
                     .setBold()
                     .setTextAlignment(TextAlignment.CENTER)
                     .setFontColor(new DeviceRgb(0, 102, 204))
-                    .setMarginBottom(20);
+                    .setMarginBottom(10);
             doc.add(amountPara);
 
             // Pie de página

@@ -3,6 +3,7 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package com.gamerker.io.e.valua_java.mainClasses;
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.*;
 /**
@@ -22,9 +23,10 @@ public class Result {
     private List<String> answers;
     private boolean archived;
     private LocalDateTime timestamp;
+    private Duration timeTaken; 
 
     // constructor que inicializa todos los campos
-    public Result(String studentUsername, String testTitle, int score, int total, double percentage, List<String> answers) {
+    public Result(String studentUsername, String testTitle, int score, int total, double percentage, List<String> answers, Duration timeTaken) {
         this.studentUsername = studentUsername;
         this.testTitle = testTitle;
         this.score = score;
@@ -33,6 +35,7 @@ public class Result {
         this.answers = new ArrayList<>(answers);
         this.archived = false;
         this.timestamp = LocalDateTime.now();
+        this.timeTaken = timeTaken;
     }
 
     // getters para acceder a los campos
@@ -42,6 +45,13 @@ public class Result {
     public int getScore() { return score; }
     public int getTotal() { return total; }
     public double getPercentage() { return percentage; }
+    public Duration getTimeTaken() { return timeTaken; }
+    public String getFormattedTime() {
+        if (timeTaken == null) return "N/A";
+        long minutes = timeTaken.toMinutes();
+        long seconds = timeTaken.getSeconds() % 60;
+        return String.format("%d min %d sec", minutes, seconds);
+    }
     public boolean isArchived() { return archived; }
     public LocalDateTime getTimestamp() { return timestamp; }
 

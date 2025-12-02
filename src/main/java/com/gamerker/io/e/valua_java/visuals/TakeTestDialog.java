@@ -72,7 +72,7 @@ public class TakeTestDialog extends JDialog {
         availableTests = appController.getTests();
         if (availableTests.isEmpty()) {
             JOptionPane.showMessageDialog(owner, "No hay pruebas disponibles.", "Error", JOptionPane.ERROR_MESSAGE);
-            dispose();
+            dispose(); dispose();
             return;
         }
         
@@ -117,7 +117,7 @@ public class TakeTestDialog extends JDialog {
         
         // Temporizador
         gbc.gridx = 2;
-        timerLabel = new JLabel("⏱️ 00:00:00");
+        timerLabel = new JLabel("Tiempo: 00:00:00");
         timerLabel.setFont(new Font("Verdana", Font.BOLD, 18));
         timerLabel.setForeground(Color.RED);
         panel.add(timerLabel, gbc);
@@ -163,16 +163,16 @@ public class TakeTestDialog extends JDialog {
         JPanel panel = new JPanel(new FlowLayout(FlowLayout.CENTER, 20, 10));
         panel.setOpaque(false);
         
-        prevButton = createNavButton("⬅️ Anterior", e -> previousQuestion());
+        prevButton = createNavButton("Anterior", e -> previousQuestion());
         prevButton.setEnabled(false);
         panel.add(prevButton);
         
-        finishButton = createNavButton("✅ Finalizar", e -> finishTest());
+        finishButton = createNavButton("Finalizar", e -> finishTest());
         finishButton.setEnabled(false);
         finishButton.setBackground(COLOR_EXITO);
         panel.add(finishButton);
         
-        nextButton = createNavButton("Siguiente ➡️", e -> nextQuestion());
+        nextButton = createNavButton("Siguiente️", e -> nextQuestion());
         nextButton.setEnabled(false);
         panel.add(nextButton);
         
@@ -277,12 +277,12 @@ public class TakeTestDialog extends JDialog {
                 long minutes = elapsedTime.toMinutes() % 60;
                 long seconds = elapsedTime.getSeconds() % 60;
                 
-                timerLabel.setText(String.format("⏱️ %02d:%02d:%02d", hours, minutes, seconds));
+                timerLabel.setText(String.format("Tiempo:️ %02d:%02d:%02d", hours, minutes, seconds));
                 
                 // Alerta si supera 30 minutos
                 if (elapsedTime.toMinutes() > 30) {
                     timerLabel.setForeground(Color.RED);
-                    timerLabel.setText(timerLabel.getText() + " ⚠️");
+                    timerLabel.setText(timerLabel.getText());
                 }
             }
         });
@@ -362,6 +362,7 @@ public class TakeTestDialog extends JDialog {
         // Detener temporizador
         if (timer != null) {
             timer.stop();
+            elapsedTime = Duration.between(testStartTime, LocalDateTime.now());
         }
         
         // Calcular resultado
@@ -384,7 +385,8 @@ public class TakeTestDialog extends JDialog {
             correctCount,
             selectedTest.getTotalQuestions(),
             percentage,
-            userAnswers
+            userAnswers,
+            elapsedTime
         );
         
         appController.getResults().add(result);
@@ -417,26 +419,276 @@ public class TakeTestDialog extends JDialog {
     
     private void showResult(Result result) {
         String status = result.getPercentage() >= 60 ? "APROBADO" : "NO APROBADO";
-        String message = String.format("""
-            <html>
-            <h2>Resultado Final</h2>
-            <p><b>Prueba:</b> %s</p>
-            <p><b>Puntuación:</b> %d/%d (%.2f%%)</p>
-            <p><b>Estado:</b> <font color='%s'>%s</font></p>
-            <p><b>Tiempo:</b> %s</p>
-            </html>
-            """,
-            result.getTestTitle(),
-            result.getScore(),
-            result.getTotal(),
-            result.getPercentage(),
-            result.getPercentage() >= 60 ? "green" : "red",
-            status,
-            elapsedTime != null ? String.format("%d min %d sec", 
-                elapsedTime.toMinutes(), elapsedTime.getSeconds() % 60) : "N/A"
-        );
+        String color = result.getPercentage() >= 60 ? "#2E7D32" : "#C62828";
+        String bgColor = result.getPercentage() >= 60 ? "#E8F5E9" : "#FFEBEE";
+        String icon = result.getPercentage() >= 60 ? "🎉" : "📝";
+
+        // Crear un panel principal con scroll
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.setBackground(Color.WHITE);
+
+        // Panel de contenido que irá dentro del scroll
+        JPanel contentPanel = new JPanel();
+        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
+        contentPanel.setBackground(Color.WHITE);
+        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
+
+        // Panel superior con título e icono
+        JPanel topPanel = new JPanel(new BorderLayout(10, 10));
+        topPanel.setBackground(Color.WHITE);
+        topPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+
+        JLabel iconLabel = new JLabel(icon);
+        iconLabel.setFont(new Font("Segoe UI Emoji", Font.PLAIN, 48));
         
-        JOptionPane.showMessageDialog(this, message, "Resultado", 
-            result.getPercentage() >= 60 ? JOptionPane.INFORMATION_MESSAGE : JOptionPane.WARNING_MESSAGE);
+        iconLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        iconLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0)); // 5px arriba
+
+        JLabel titleLabel = new JLabel("RESULTADO DE LA PRUEBA");
+        titleLabel.setFont(new Font("Verdana", Font.BOLD, 20));
+        titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
+        titleLabel.setForeground(new Color(33, 33, 33));
+
+        topPanel.add(iconLabel, BorderLayout.WEST);
+        topPanel.add(titleLabel, BorderLayout.CENTER);
+
+        // Panel central con datos - ahora dentro del scroll
+        JPanel centerPanel = new JPanel();
+        centerPanel.setLayout(new BoxLayout(centerPanel, BoxLayout.Y_AXIS));
+        centerPanel.setBackground(Color.WHITE);
+        centerPanel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
+
+        // Información de la prueba en paneles expandibles
+        JPanel infoPanel = new JPanel();
+        infoPanel.setLayout(new BoxLayout(infoPanel, BoxLayout.Y_AXIS));
+        infoPanel.setBackground(Color.WHITE);
+        infoPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                "Información de la Prueba",
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                new Font("Verdana", Font.BOLD, 13),
+                new Color(66, 66, 66)
+            ),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        addInfoRow(infoPanel, "Prueba:", result.getTestTitle());
+        addInfoRow(infoPanel, "Fecha:", LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm")));
+        addInfoRow(infoPanel, "Duración:", result.getFormattedTime());
+
+        // Panel de puntuación
+        JPanel scorePanel = new JPanel();
+        scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
+        scorePanel.setBackground(Color.WHITE);
+        scorePanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                "Puntuación",
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                new Font("Verdana", Font.BOLD, 13),
+                new Color(66, 66, 66)
+            ),
+            BorderFactory.createEmptyBorder(15, 15, 15, 15)
+        ));
+
+        // Mostrar puntuación en texto grande
+        JLabel scoreTextLabel = new JLabel(String.format("%d / %d", result.getScore(), result.getTotal()));
+        scoreTextLabel.setFont(new Font("Verdana", Font.BOLD, 36));
+        scoreTextLabel.setForeground(getPercentageColor(result.getPercentage()));
+        scoreTextLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        scorePanel.add(scoreTextLabel);
+
+        scorePanel.add(Box.createRigidArea(new Dimension(0, 10)));
+
+        // Barra de progreso
+        JProgressBar progressBar = new JProgressBar(0, 100);
+        progressBar.setValue((int) result.getPercentage());
+        progressBar.setString(String.format("%.1f%%", result.getPercentage()));
+        progressBar.setStringPainted(true);
+        progressBar.setFont(new Font("Verdana", Font.BOLD, 14));
+        progressBar.setForeground(getPercentageColor(result.getPercentage()));
+        progressBar.setBackground(new Color(240, 240, 240));
+        progressBar.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+            BorderFactory.createEmptyBorder(2, 2, 2, 2)
+        ));
+        progressBar.setMaximumSize(new Dimension(Integer.MAX_VALUE, 35));
+        progressBar.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        scorePanel.add(progressBar);
+
+        // Etiqueta de interpretación
+        JLabel interpretationLabel = new JLabel(getInterpretation(result.getPercentage()));
+        interpretationLabel.setFont(new Font("Verdana", Font.ITALIC, 12));
+        interpretationLabel.setForeground(new Color(97, 97, 97));
+        interpretationLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        interpretationLabel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
+        scorePanel.add(interpretationLabel);
+
+        // Panel de estado destacado
+        JPanel statusPanel = new JPanel(new BorderLayout());
+        statusPanel.setBackground(Color.decode(bgColor));
+        statusPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(Color.decode(color), 3),
+            BorderFactory.createEmptyBorder(20, 30, 20, 30)
+        ));
+        statusPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 80));
+
+        JLabel statusLabel = new JLabel(status, SwingConstants.CENTER);
+        statusLabel.setFont(new Font("Verdana", Font.BOLD, 22));
+        statusLabel.setForeground(Color.decode(color));
+        statusPanel.add(statusLabel, BorderLayout.CENTER);
+
+        // Panel de recomendaciones (expandible)
+        JPanel recommendationsPanel = new JPanel();
+        recommendationsPanel.setLayout(new BoxLayout(recommendationsPanel, BoxLayout.Y_AXIS));
+        recommendationsPanel.setBackground(Color.WHITE);
+        recommendationsPanel.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createTitledBorder(
+                BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
+                "Recomendaciones",
+                javax.swing.border.TitledBorder.LEFT,
+                javax.swing.border.TitledBorder.TOP,
+                new Font("Verdana", Font.BOLD, 13),
+                new Color(66, 66, 66)
+            ),
+            BorderFactory.createEmptyBorder(10, 10, 10, 10)
+        ));
+
+        String recommendation = result.getPercentage() >= 60 ? 
+            "¡Excelente trabajo! Continúa practicando para mejorar aún más." :
+            "Te recomendamos revisar los temas y realizar más ejercicios de práctica.";
+
+        JTextArea recommendationText = new JTextArea(recommendation);
+        recommendationText.setFont(new Font("Verdana", Font.PLAIN, 12));
+        recommendationText.setForeground(new Color(97, 97, 97));
+        recommendationText.setLineWrap(true);
+        recommendationText.setWrapStyleWord(true);
+        recommendationText.setEditable(false);
+        recommendationText.setBackground(new Color(250, 250, 250));
+        recommendationText.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+
+        recommendationsPanel.add(recommendationText);
+
+        // Añadir todos los paneles al contenido
+        contentPanel.add(topPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
+        contentPanel.add(infoPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        contentPanel.add(scorePanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        contentPanel.add(statusPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
+        contentPanel.add(recommendationsPanel);
+        contentPanel.add(Box.createRigidArea(new Dimension(0, 20)));
+
+        // Panel inferior con botones
+        JPanel bottomPanel = new JPanel();
+        bottomPanel.setLayout(new BoxLayout(bottomPanel, BoxLayout.Y_AXIS));
+        bottomPanel.setBackground(new Color(245, 245, 245));
+        bottomPanel.setBorder(BorderFactory.createEmptyBorder(15, 0, 20, 0));
+
+        JButton closeButton = createStyledButton("Cerrar", Color.decode("#4CAF50"));
+        closeButton.addActionListener(e -> SwingUtilities.getWindowAncestor(mainPanel).dispose());
+
+        // Centrar el botón
+        closeButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+
+        bottomPanel.add(Box.createVerticalStrut(10));
+        bottomPanel.add(closeButton);
+        bottomPanel.add(Box.createVerticalStrut(10));
+    
+        // Añadir scroll al panel de contenido
+        JScrollPane scrollPane = new JScrollPane(contentPanel);
+        scrollPane.setBorder(null);
+        scrollPane.getVerticalScrollBar().setUnitIncrement(16);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+
+        // Ensamblar todo
+        mainPanel.add(scrollPane, BorderLayout.CENTER);
+        mainPanel.add(bottomPanel, BorderLayout.SOUTH);
+
+        // Crear y mostrar el diálogo
+        JDialog dialog = new JDialog(this, "📋 Resultado Final", true);
+        dialog.setContentPane(mainPanel);
+        dialog.setSize(600, 490); // Tamaño más grande
+        dialog.setMinimumSize(new Dimension(500, 400));
+        dialog.setLocationRelativeTo(this);
+        dialog.setVisible(true);
+    }
+
+    // Método auxiliar para añadir filas de información
+    private void addInfoRow(JPanel parent, String labelText, String value) {
+        JPanel rowPanel = new JPanel(new BorderLayout(10, 5));
+        rowPanel.setBackground(Color.WHITE);
+        rowPanel.setMaximumSize(new Dimension(Integer.MAX_VALUE, 30));
+
+        JLabel label = new JLabel(labelText);
+        label.setFont(new Font("Verdana", Font.BOLD, 12));
+        label.setForeground(new Color(66, 66, 66));
+        label.setPreferredSize(new Dimension(100, 20));
+
+        JLabel valueLabel = new JLabel(value);
+        valueLabel.setFont(new Font("Verdana", Font.PLAIN, 12));
+        valueLabel.setForeground(new Color(97, 97, 97));
+
+        rowPanel.add(label, BorderLayout.WEST);
+        rowPanel.add(valueLabel, BorderLayout.CENTER);
+
+        parent.add(rowPanel);
+        parent.add(Box.createRigidArea(new Dimension(0, 5)));
+    }
+
+    // Método para obtener interpretación del porcentaje
+    private String getInterpretation(double percentage) {
+        if (percentage >= 90) return "¡Excelente! Dominio total del tema.";
+        if (percentage >= 80) return "Muy bueno. Buen dominio del tema.";
+        if (percentage >= 70) return "Buen trabajo. Comprensión adecuada.";
+        if (percentage >= 60) return "Aprobado. Puedes mejorar con práctica.";
+        if (percentage >= 50) return "Regular. Necesitas repasar los conceptos.";
+        if (percentage >= 40) return "Insuficiente. Requiere estudio adicional.";
+        return "Muy bajo. Se recomienda estudiar desde lo básico.";
+    }
+
+    // Método auxiliar para obtener color según porcentaje
+    private Color getPercentageColor(double percentage) {
+        if (percentage >= 90) return new Color(0, 150, 136); // Verde turquesa
+        if (percentage >= 80) return new Color(76, 175, 80); // Verde
+        if (percentage >= 70) return new Color(139, 195, 74); // Verde claro
+        if (percentage >= 60) return new Color(205, 220, 57); // Lima
+        if (percentage >= 50) return new Color(255, 193, 7); // Ámbar
+        if (percentage >= 40) return new Color(255, 152, 0); // Naranja
+        return new Color(244, 67, 54); // Rojo
+    }
+
+    // Método auxiliar para crear botones estilizados
+    private JButton createStyledButton(String text, Color bgColor) {
+        JButton button = new JButton(text);
+        button.setFont(new Font("Verdana", Font.BOLD, 13));
+        button.setBackground(bgColor);
+        button.setForeground(Color.WHITE);
+        button.setFocusPainted(false);
+        button.setBorder(BorderFactory.createCompoundBorder(
+            BorderFactory.createLineBorder(bgColor.darker(), 1),
+            BorderFactory.createEmptyBorder(8, 15, 8, 15)
+        ));
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
+
+        // Efecto hover
+        button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor.darker());
+            }
+            @Override
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                button.setBackground(bgColor);
+            }
+        });
+
+        return button;
     }
 }

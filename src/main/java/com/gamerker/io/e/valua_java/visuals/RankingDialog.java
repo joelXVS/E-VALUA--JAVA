@@ -113,13 +113,13 @@ public class RankingDialog extends JDialog {
         JPanel globalPanel = new JPanel(new BorderLayout());
         globalPanel.setOpaque(false);
         globalPanel.add(createGlobalTablePanel(), BorderLayout.CENTER);
-        tabs.addTab("🏆 Ranking Global", globalPanel);
+        tabs.addTab("Ranking Global", globalPanel);
         
         // Pestaña 2: Ranking por Prueba
         JPanel testPanel = new JPanel(new BorderLayout());
         testPanel.setOpaque(false);
         testPanel.add(createTestTablePanel(), BorderLayout.CENTER);
-        tabs.addTab("📊 Ranking por Prueba", testPanel);
+        tabs.addTab("Ranking por Prueba", testPanel);
         
         return tabs;
     }
@@ -135,7 +135,7 @@ public class RankingDialog extends JDialog {
             Color.WHITE));
         
         // Modelo de tabla global
-        String[] columnas = {"Pos", "🥇🥈🥉", "Estudiante", "Prueba", "Puntaje", "%", "Fecha"};
+        String[] columnas = {"Pos", "TOP", "Estudiante", "Prueba", "Puntaje", "%", "Fecha"};
         globalModel = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -164,7 +164,6 @@ public class RankingDialog extends JDialog {
                     String pos = table.getValueAt(row, 0).toString();
                     if ("1".equals(pos)) {
                         c.setBackground(COLOR_ORO);
-                        if (column == 1) ((JLabel)c).setFont(EMOJI_FONT);
                     } else if ("2".equals(pos)) {
                         c.setBackground(COLOR_PLATA);
                     } else if ("3".equals(pos)) {
@@ -202,7 +201,7 @@ public class RankingDialog extends JDialog {
             Color.WHITE));
         
         // Modelo de tabla por prueba
-        String[] columnas = {"Pos", "🥇", "Estudiante", "Puntaje", "%", "Tiempo"};
+        String[] columnas = {"Pos", "TOP", "Estudiante", "Puntaje", "%", "Tiempo"};
         testModel = new DefaultTableModel(columnas, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -228,6 +227,10 @@ public class RankingDialog extends JDialog {
                     String pos = table.getValueAt(row, 0).toString();
                     if ("1".equals(pos)) {
                         c.setBackground(COLOR_ORO);
+                        if (column == 1) {
+                            ((JLabel)c).setText("" + value);
+                            ((JLabel)c).setFont(new Font(Font.SANS_SERIF, Font.BOLD, 14));
+                        }
                     } else if ("2".equals(pos)) {
                         c.setBackground(COLOR_PLATA);
                     } else if ("3".equals(pos)) {
@@ -295,7 +298,7 @@ public class RankingDialog extends JDialog {
             Result result = entry.getValue();
             User student = findUserByUsername(result.getStudentUsername());
             
-            String medal = i == 0 ? "🥇" : i == 1 ? "🥈" : i == 2 ? "🥉" : "";
+            String medal = i == 0 ? "1er" : i == 1 ? "2do" : i == 2 ? "3er" : "";
             
             globalModel.addRow(new Object[]{
                 String.valueOf(i + 1),
@@ -332,8 +335,7 @@ public class RankingDialog extends JDialog {
             Result result = testResults.get(i);
             User student = findUserByUsername(result.getStudentUsername());
             
-            // Calcular tiempo aproximado (simulado)
-            String tiempo = String.format("%d min", result.getTotal() * 2);
+            String tiempo = String.format("%d min", result.getTotal()* 2);
             
             testModel.addRow(new Object[]{
                 String.valueOf(i + 1),
@@ -371,7 +373,7 @@ public class RankingDialog extends JDialog {
     }
     
     private void showSuccess(String message) {
-        statusLabel.setText("✅ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(new Color(40, 167, 69));
         
         Timer timer = new Timer(3000, e -> statusLabel.setText(" "));

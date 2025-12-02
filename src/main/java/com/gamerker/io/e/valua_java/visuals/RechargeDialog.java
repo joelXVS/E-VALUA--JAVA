@@ -93,10 +93,10 @@ public class RechargeDialog extends JDialog {
         
         // Saldo actual
         panel.add(Box.createVerticalStrut(10));
-        String balanceText = String.format("💰 Saldo Actual: $%,.0f", currentUser.getBalance());
+        String balanceText = String.format("$ Saldo Actual: $%,.0f", currentUser.getBalance());
         balanceLabel = new JLabel(balanceText);
         balanceLabel.setFont(new Font("Verdana", Font.BOLD, 16));
-        balanceLabel.setForeground(Color.YELLOW);
+        balanceLabel.setForeground(Color.GRAY);
         balanceLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         panel.add(balanceLabel);
         
@@ -123,21 +123,21 @@ public class RechargeDialog extends JDialog {
         
         if (hasPersonal) {
             // Usuario con tarjeta personal
-            addButton(panel, "👁️ Ver Tarjeta Personal", e -> mostrarTarjetaPersonal());
-            addButton(panel, "💳 Recargar Personal", e -> recargarPersonal());
-            addButton(panel, "🔄 Cambiar Tarjeta ($7.500)", e -> cambiarTarjeta());
+            addButton(panel, "Ver Tarjeta Personal", e -> mostrarTarjetaPersonal());
+            addButton(panel, "Recargar Personal", e -> recargarPersonal());
+            addButton(panel, "Cambiar Tarjeta ($7.500)", e -> cambiarTarjeta());
         } else {
             // Usuario sin tarjeta personal
-            addButton(panel, "🚀 Migrar a Personal", e -> migrarTarjeta());
+            addButton(panel, "Migrar a Personal", e -> migrarTarjeta());
             
             if (hasWelcome) {
-                addButton(panel, "🎁 Usar Bienvenida", e -> usarBienvenida());
-                addButton(panel, "📋 Ver Bienvenida", e -> verBienvenida());
+                addButton(panel, "Usar Bienvenida", e -> usarBienvenida());
+                addButton(panel, "Ver Bienvenida", e -> verBienvenida());
             }
         }
         
         // Botón para actualizar
-        addButton(panel, "🔄 Actualizar", e -> refreshAll());
+        addButton(panel, "Actualizar", e -> refreshAll());
         
         return panel;
     }
@@ -436,7 +436,7 @@ public class RechargeDialog extends JDialog {
     
     private void refreshHeader() {
         // Actualizar los textos sin reconstruir el panel
-        balanceLabel.setText(String.format("💰 Saldo Actual: $%,.0f", currentUser.getBalance()));
+        balanceLabel.setText(String.format("$ Saldo Actual: $%,.0f", currentUser.getBalance()));
         statusInfoLabel.setText(recharge.getBalanceStatus(currentUser));
         
         // Forzar actualización
@@ -456,21 +456,21 @@ public class RechargeDialog extends JDialog {
         
         if (hasPersonal) {
             // Usuario con tarjeta personal
-            addButton(buttonPanel, "👁️ Ver Tarjeta Personal", e -> mostrarTarjetaPersonal());
-            addButton(buttonPanel, "💳 Recargar Personal", e -> recargarPersonal());
-            addButton(buttonPanel, "🔄 Cambiar Tarjeta ($7.500)", e -> cambiarTarjeta());
+            addButton(buttonPanel, "Ver Tarjeta Personal", e -> mostrarTarjetaPersonal());
+            addButton(buttonPanel, "Recargar Personal", e -> recargarPersonal());
+            addButton(buttonPanel, "Cambiar Tarjeta ($7.500)", e -> cambiarTarjeta());
         } else {
             // Usuario sin tarjeta personal
-            addButton(buttonPanel, "🚀 Migrar a Personal", e -> migrarTarjeta());
+            addButton(buttonPanel, "Migrar a Personal", e -> migrarTarjeta());
             
             if (hasWelcome) {
-                addButton(buttonPanel, "🎁 Usar Bienvenida", e -> usarBienvenida());
-                addButton(buttonPanel, "📋 Ver Bienvenida", e -> verBienvenida());
+                addButton(buttonPanel, "Usar Bienvenida", e -> usarBienvenida());
+                addButton(buttonPanel, "Ver Bienvenida", e -> verBienvenida());
             }
         }
         
         // Botón para actualizar
-        addButton(buttonPanel, "🔄 Actualizar", e -> refreshAll());
+        addButton(buttonPanel, "Actualizar", e -> refreshAll());
         
         // Actualizar el panel de botones
         buttonPanel.revalidate();
@@ -478,7 +478,7 @@ public class RechargeDialog extends JDialog {
     }
     
     private void showSuccess(String message) {
-        statusLabel.setText("✅ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_EXITO);
         
         // Limpiar después de 3 segundos
@@ -488,7 +488,7 @@ public class RechargeDialog extends JDialog {
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_ERROR);
         
         // Limpiar después de 5 segundos

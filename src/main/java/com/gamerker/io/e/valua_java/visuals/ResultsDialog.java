@@ -110,7 +110,7 @@ public class ResultsDialog extends JDialog {
         
         // Contador de resultados
         countLabel = new JLabel("Resultados: 0");
-        countLabel.setForeground(Color.YELLOW);
+        countLabel.setForeground(Color.BLACK);
         panel.add(countLabel);
         
         return panel;
@@ -144,18 +144,31 @@ public class ResultsDialog extends JDialog {
                 Component c = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
                 
                 if (!isSelected) {
-                    // Colorear según aprobación
-                    String percentageStr = table.getValueAt(row, 4).toString().replace("%", "");
-                    double percentage = Double.parseDouble(percentageStr);
-                    
-                    if (percentage >= 70) {
-                        c.setBackground(new Color(144, 238, 144)); // Verde claro
-                    } else if (percentage >= 60) {
-                        c.setBackground(new Color(255, 255, 153)); // Amarillo claro
-                    } else {
-                        c.setBackground(new Color(255, 204, 204)); // Rojo claro
+                    try {
+                        // Obtener el valor de porcentaje y manejar coma/punto
+                        String percentageStr = table.getValueAt(row, 4).toString();
+
+                        // Remover cualquier carácter no numérico excepto punto y coma
+                        percentageStr = percentageStr.replace("%", "").trim();
+
+                        // Reemplazar coma por punto si existe
+                        percentageStr = percentageStr.replace(',', '.');
+
+                        double percentage = Double.parseDouble(percentageStr);
+
+                        if (percentage >= 70) {
+                            c.setBackground(new Color(144, 238, 144)); // Verde claro
+                        } else if (percentage >= 60) {
+                            c.setBackground(new Color(255, 255, 153)); // Amarillo claro
+                        } else {
+                            c.setBackground(new Color(255, 204, 204)); // Rojo claro
+                        }
+                    } catch (NumberFormatException e) {
+                        // Si hay error, usar color neutro
+                        c.setBackground(Color.WHITE);
+                        System.err.println("Error parseando porcentaje: " + e.getMessage());
                     }
-                    
+
                     // Marcar archivados
                     boolean isArchived = (Boolean) table.getValueAt(row, 7);
                     if (isArchived) {
@@ -186,19 +199,19 @@ public class ResultsDialog extends JDialog {
         panel.setOpaque(false);
         
         // Ver Detalles
-        detailsButton = createButton("👁️ Ver Detalles", e -> viewResultDetails(), new Color(23, 162, 184));
+        detailsButton = createButton("Ver Detalles", e -> viewResultDetails(), new Color(23, 162, 184), new Color(23, 132, 144));
         panel.add(detailsButton);
         
         // Exportar a PDF
-        exportButton = createButton("📄 Exportar PDF", e -> exportToPDF(), COLOR_BOTON);
+        exportButton = createButton("Exportar PDF", e -> exportToPDF(), COLOR_BOTON, COLOR_BOTON_HOVER);
         panel.add(exportButton);
         
         // Archivar/Desarchivar
-        archiveButton = createButton("🗄️ Archivar", e -> toggleArchive(), new Color(108, 117, 125));
+        archiveButton = createButton("Archivar", e -> toggleArchive(), new Color(108, 117, 125), new Color(88, 107, 95));
         panel.add(archiveButton);
         
         // Refrescar
-        refreshButton = createButton("🔄 Refrescar", e -> loadResults(), COLOR_BOTON);
+        refreshButton = createButton("Refrescar", e -> loadResults(), COLOR_BOTON, COLOR_BOTON_HOVER);
         panel.add(refreshButton);
         
         // Status
@@ -210,19 +223,21 @@ public class ResultsDialog extends JDialog {
         return panel;
     }
     
-    private JButton createButton(String text, java.awt.event.ActionListener listener, Color bgColor) {
+    private JButton createButton(String text, java.awt.event.ActionListener listener, Color bgColor, Color hoverColor) {
         JButton button = new JButton(text);
         button.setFont(new Font("Verdana", Font.BOLD, 12));
         button.setBackground(bgColor);
-        button.setForeground(Color.BLACK);
+        button.setForeground(new Color(0, 0, 0));
         button.setFocusPainted(false);
         button.setPreferredSize(new Dimension(150, 30));
         button.addActionListener(listener);
         
         button.addMouseListener(new java.awt.event.MouseAdapter() {
+            @Override
             public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(COLOR_BOTON_HOVER);
+                button.setBackground(hoverColor);
             }
+            @Override
             public void mouseExited(java.awt.event.MouseEvent evt) {
                 button.setBackground(bgColor);
             }
@@ -259,7 +274,7 @@ public class ResultsDialog extends JDialog {
                 String.format("%.2f%%", result.getPercentage()),
                 result.getPercentage() >= 70 ? "APROBADO" : 
                 result.getPercentage() >= 60 ? "MEDIO" : "NO APROBADO",
-                result.getTotal() * 2 + " min",
+                result.getFormattedTime(),
                 result.isArchived()
             });
         }
@@ -311,7 +326,7 @@ public class ResultsDialog extends JDialog {
         if (hasSelection) {
             int row = resultsTable.getSelectedRow();
             boolean isArchived = (Boolean) tableModel.getValueAt(row, 7);
-            archiveButton.setText(isArchived ? "📤 Desarchivar" : "🗄️ Archivar");
+            archiveButton.setText(isArchived ? "📤 Desarchivar" : "💼️ Archivar");
         }
     }
     
@@ -332,6 +347,7 @@ public class ResultsDialog extends JDialog {
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss"))).append("</td></tr>");
         details.append("<tr><td><b>Puntaje:</b></td><td>").append(
             String.format("%d/%d (%.2f%%)", result.getScore(), result.getTotal(), result.getPercentage())).append("</td></tr>");
+        details.append("<tr><td><b>Duración:</b></td><td>").append(result.getFormattedTime()).append("</td></tr>");
         details.append("<tr><td><b>Estado:</b></td><td><font color='%s'>%s</font></td></tr>".formatted(
             result.getPercentage() >= 70 ? "green" : result.getPercentage() >= 60 ? "orange" : "red",
             result.getPercentage() >= 70 ? "APROBADO" : result.getPercentage() >= 60 ? "MEDIO" : "NO APROBADO"));
@@ -407,7 +423,7 @@ public class ResultsDialog extends JDialog {
     }
     
     private void showSuccess(String message) {
-        statusLabel.setText("✅ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(new Color(40, 167, 69));
         
         Timer timer = new Timer(3000, e -> statusLabel.setText(" "));
@@ -416,7 +432,7 @@ public class ResultsDialog extends JDialog {
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_ERROR);
         
         Timer timer = new Timer(5000, e -> statusLabel.setText(" "));

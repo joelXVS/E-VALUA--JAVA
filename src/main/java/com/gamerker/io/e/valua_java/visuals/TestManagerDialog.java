@@ -14,6 +14,7 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -51,6 +52,8 @@ public class TestManagerDialog extends JDialog {
         
         this.currentUser = user;
         this.appController = controller;
+        
+        controller.getTests();
         
         setSize(1200, 700);
         setLocationRelativeTo(owner);
@@ -91,7 +94,7 @@ public class TestManagerDialog extends JDialog {
         // Contador de pruebas
         testCountLabel = new JLabel("Total: 0 pruebas");
         testCountLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
-        testCountLabel.setForeground(Color.YELLOW);
+        testCountLabel.setForeground(Color.BLACK);
         panel.add(testCountLabel);
         
         // Info del creador
@@ -165,19 +168,19 @@ public class TestManagerDialog extends JDialog {
         panel.setOpaque(false);
         
         // Botón Crear Prueba
-        addButton(panel, "➕ Crear Prueba", e -> createTest(), COLOR_BOTON);
+        addButton(panel, "Crear Prueba", e -> createTest(), COLOR_BOTON);
         
         // Botón Editar Prueba
-        addButton(panel, "✏️ Editar Prueba", e -> editTest(), new Color(23, 162, 184));
+        addButton(panel, "Editar Prueba", e -> editTest(), new Color(23, 162, 184));
         
         // Botón Eliminar Prueba
-        addButton(panel, "🗑️ Eliminar Prueba", e -> deleteTest(), new Color(220, 53, 69));
+        addButton(panel, "Eliminar Prueba", e -> deleteTest(), new Color(220, 53, 69));
         
         // Botón Vista Previa
-        addButton(panel, "👁️ Vista Previa", e -> previewTest(), new Color(111, 66, 193));
+        addButton(panel, "Vista Previa", e -> previewTest(), new Color(111, 66, 193));
         
         // Botón Refrescar
-        addButton(panel, "🔄 Refrescar", e -> loadTests(), COLOR_BOTON);
+        addButton(panel, "Refrescar", e -> loadTests(), COLOR_BOTON);
         
         // Etiqueta de estado
         statusLabel = new JLabel(" ");
@@ -212,24 +215,44 @@ public class TestManagerDialog extends JDialog {
         parent.add(button);
     }
     
-    private void loadTests() {
+    void loadTests() {
         List<Test> tests = appController.getTests();
         tableModel.setRowCount(0);
-        
-        for (Test test : tests) {
-            String creador = currentUser.getUsername(); // Asumiendo que el que carga es el creador
-            String estado = test.getQuestions().isEmpty() ? "⚠️ Vacía" : "✅ Activa";
-            
+
+        if (tests.isEmpty()) {
+            testCountLabel.setText("Total: 0 pruebas");
+            return;
+        }
+
+        for (int i = 0; i < tests.size(); i++) {
+            Test test = tests.get(i);
+
+            // Formatear precio
+            String precio = String.format("$%,.0f", test.getPrice());
+
+            // Determinar creador (si el test tiene creador)
+            String creador = "Sistema";
+
+            // Determinar estado
+            String estado;
+            if (test.getQuestions().isEmpty()) {
+                estado = "VACÍA";
+            } else if (test.getTotalQuestions() < 3) {
+                estado = "MINIMA";
+            } else {
+                estado = "ACTIVA";
+            }
+
             tableModel.addRow(new Object[]{
-                tests.indexOf(test) + 1,
-                test.getTitle(),
-                test.getPrice(),
-                test.getTotalQuestions(),
-                creador,
-                estado
+                i + 1,                      // ID
+                test.getTitle(),            // Título
+                precio,                     // Precio formateado
+                test.getTotalQuestions(),   // Número de preguntas
+                creador,                    // Creador
+                estado                      // Estado
             });
         }
-        
+
         testCountLabel.setText("Total: " + tests.size() + " pruebas");
     }
     
@@ -343,7 +366,7 @@ public class TestManagerDialog extends JDialog {
     }
     
     private void showSuccess(String message) {
-        statusLabel.setText("✅ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_EXITO);
         
         Timer timer = new Timer(3000, e -> statusLabel.setText(" "));
@@ -352,7 +375,7 @@ public class TestManagerDialog extends JDialog {
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(COLOR_ERROR);
         
         Timer timer = new Timer(5000, e -> statusLabel.setText(" "));
@@ -372,6 +395,8 @@ class TestEditorDialog extends JDialog {
     private DefaultTableModel questionsModel;
     private JLabel statusLabel;
     
+    // Variable temporal para preguntas
+    private final List<Question> tempQuestions = new ArrayList<>();
     private String lastQuestionText = "";
     private String[] lastOptions = new String[4];
     private String lastCorrectAnswer = "A";
@@ -393,7 +418,7 @@ class TestEditorDialog extends JDialog {
     }
     
     private void showSuccess(String message) {
-        statusLabel.setText("✅ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(new Color(40, 167, 69));
 
         // El Timer es javax.swing.Timer, ya usado en el otro diálogo
@@ -483,9 +508,9 @@ class TestEditorDialog extends JDialog {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 10, 5));
         buttonPanel.setOpaque(false);
         
-        addButton(buttonPanel, "➕ Agregar Pregunta", e -> addQuestion(), new Color(40, 167, 69));
-        addButton(buttonPanel, "✏️ Editar Pregunta", e -> editQuestion(), new Color(23, 162, 184));
-        addButton(buttonPanel, "🗑️ Eliminar Pregunta", e -> deleteQuestion(), new Color(220, 53, 69));
+        addButton(buttonPanel, "Agregar Pregunta", e -> addQuestion(), new Color(40, 167, 69));
+        addButton(buttonPanel, "Editar Pregunta", e -> editQuestion(), new Color(23, 162, 184));
+        addButton(buttonPanel, "Eliminar Pregunta", e -> deleteQuestion(), new Color(220, 53, 69));
         
         panel.add(buttonPanel, BorderLayout.SOUTH);
         
@@ -497,7 +522,7 @@ class TestEditorDialog extends JDialog {
         panel.setOpaque(false);
         
         // Guardar
-        JButton saveButton = new JButton("💾 Guardar Prueba");
+        JButton saveButton = new JButton("Guardar Prueba");
         saveButton.setFont(new Font("Verdana", Font.BOLD, 14));
         saveButton.setBackground(new Color(40, 167, 69));
         saveButton.setForeground(Color.BLACK);
@@ -505,7 +530,7 @@ class TestEditorDialog extends JDialog {
         panel.add(saveButton);
         
         // Cancelar
-        JButton cancelButton = new JButton("❌ Cancelar");
+        JButton cancelButton = new JButton("Cancelar");
         cancelButton.setFont(new Font("Verdana", Font.BOLD, 14));
         cancelButton.setBackground(new Color(220, 53, 69));
         cancelButton.setForeground(Color.BLACK);
@@ -536,30 +561,46 @@ class TestEditorDialog extends JDialog {
         priceField.setText(String.valueOf(existingTest.getPrice()));
         
         questionsModel.setRowCount(0);
-        for (int i = 0; i < existingTest.getQuestions().size(); i++) {
-            Question q = existingTest.getQuestions().get(i);
-            questionsModel.addRow(new Object[]{
-                i + 1,
-                truncate(q.getQuestionText(), 50),
-                q.getType(),
-                q.getOptions().size() + " opciones",
-                q.getCorrectAnswer()
-            });
+        
+        // Si es prueba existente, cargar preguntas existentes
+        if (existingTest != null) {
+            for (int i = 0; i < existingTest.getQuestions().size(); i++) {
+                Question q = existingTest.getQuestions().get(i);
+                questionsModel.addRow(new Object[]{
+                    i + 1,
+                    truncate(q.getQuestionText(), 50),
+                    q.getType(),
+                    q.getOptions().size() + " opciones",
+                    q.getCorrectAnswer()
+                });
+            }
+        }
+        // Si es prueba nueva, cargar preguntas temporales
+        else {
+            for (int i = 0; i < tempQuestions.size(); i++) {
+                Question q = tempQuestions.get(i);
+                questionsModel.addRow(new Object[]{
+                    i + 1,
+                    truncate(q.getQuestionText(), 50),
+                    q.getType(),
+                    q.getOptions().size() + " opciones",
+                    q.getCorrectAnswer()
+                });
+            }
         }
     }
     
     private void addQuestion() {
         new QuestionDialog(this, null, q -> {
             if (existingTest != null) {
+                // Para prueba existente: agregar a la prueba
                 existingTest.addQuestion(q);
             } else {
-                // Para nueva prueba, guardamos temporalmente
-                lastQuestionText = q.getQuestionText();
-                lastOptions = q.getOptions().toArray(new String[0]);
-                lastCorrectAnswer = q.getCorrectAnswer();
-                lastType = q.getType();
+                // Para nueva prueba: agregar a la lista temporal
+                tempQuestions.add(q);
             }
             
+            // Agregar a la tabla para visualización
             questionsModel.addRow(new Object[]{
                 questionsModel.getRowCount() + 1,
                 truncate(q.getQuestionText(), 50),
@@ -577,9 +618,33 @@ class TestEditorDialog extends JDialog {
             return;
         }
         
-        Question question = existingTest.getQuestions().get(selectedRow);
+        Question question;
+        if (existingTest != null) {
+            // Para prueba existente
+            if (selectedRow >= existingTest.getQuestions().size()) {
+                showError("Índice de pregunta inválido");
+                return;
+            }
+            question = existingTest.getQuestions().get(selectedRow);
+        } else {
+            // Para nueva prueba
+            if (selectedRow >= tempQuestions.size()) {
+                showError("Índice de pregunta inválido");
+                return;
+            }
+            question = tempQuestions.get(selectedRow);
+        }
+        
         new QuestionDialog(this, question, q -> {
-            existingTest.getQuestions().set(selectedRow, q);
+            if (existingTest != null) {
+                // Actualizar en prueba existente
+                existingTest.getQuestions().set(selectedRow, q);
+            } else {
+                // Actualizar en lista temporal
+                tempQuestions.set(selectedRow, q);
+            }
+            
+            // Actualizar la tabla
             questionsModel.setValueAt(truncate(q.getQuestionText(), 50), selectedRow, 1);
             questionsModel.setValueAt(q.getType(), selectedRow, 2);
             questionsModel.setValueAt(q.getOptions().size() + " opciones", selectedRow, 3);
@@ -600,10 +665,18 @@ class TestEditorDialog extends JDialog {
             JOptionPane.YES_NO_OPTION);
         
         if (confirm == JOptionPane.YES_OPTION) {
-            existingTest.getQuestions().remove(selectedRow);
+            if (existingTest != null) {
+                // Eliminar de prueba existente
+                existingTest.getQuestions().remove(selectedRow);
+            } else {
+                // Eliminar de lista temporal
+                tempQuestions.remove(selectedRow);
+            }
+            
+            // Eliminar de la tabla
             questionsModel.removeRow(selectedRow);
             
-            // Renumerar
+            // Renumerar las filas restantes
             for (int i = 0; i < questionsModel.getRowCount(); i++) {
                 questionsModel.setValueAt(i + 1, i, 0);
             }
@@ -611,7 +684,6 @@ class TestEditorDialog extends JDialog {
             showSuccess("Pregunta eliminada");
         }
     }
-    
     private void saveTest() {
         String title = titleField.getText().trim();
         if (title.isEmpty()) {
@@ -627,41 +699,70 @@ class TestEditorDialog extends JDialog {
             price = 5000;
         }
         
-        // Verificar si hay preguntas
-        if (existingTest != null && existingTest.getQuestions().isEmpty()) {
-            showError("La prueba debe tener al menos una pregunta");
-            return;
+        // Verificar si ya existe una prueba con el mismo título (solo para nuevas)
+        if (existingTest == null) {
+            boolean exists = appController.getTests().stream()
+                .anyMatch(t -> t.getTitle().equalsIgnoreCase(title));
+            if (exists) {
+                showError("Ya existe una prueba con ese título");
+                return;
+            }
         }
+        
+        Test testToSave;
         
         if (existingTest == null) {
-            // Crear nueva prueba
-            Test newTest = new Test(title);
-            newTest.setPrice(price);
+            // === CREAR NUEVA PRUEBA ===
             
-            // Si había una pregunta temporal, agregarla
-            if (!lastQuestionText.isEmpty()) {
-                try {
-                    Question q = new MultipleChoiceQuestion(
-                        lastQuestionText, 
-                        List.of(lastOptions), 
-                        lastCorrectAnswer, 
-                        lastType
-                    );
-                    newTest.addQuestion(q);
-                } catch (Exception e) {
-                    showError("Error en la pregunta temporal: " + e.getMessage());
-                    return;
-                }
+            // 1. Verificar que tenga al menos una pregunta
+            if (tempQuestions.isEmpty()) {
+                showError("La prueba debe tener al menos una pregunta");
+                return;
             }
             
-            appController.getTests().add(newTest);
+            // 2. Crear la prueba
+            testToSave = new Test(title);
+            testToSave.setPrice(price);
+            
+            // 3. Agregar todas las preguntas de la lista temporal
+            for (Question q : tempQuestions) {
+                testToSave.addQuestion(q);
+            }
+            
+            // 4. Agregar a la lista del AppController
+            appController.getTests().add(testToSave);
+            showSuccess("Prueba creada exitosamente: " + title);
+            
         } else {
-            // Actualizar prueba existente
-            existingTest.setPrice(price);
+            // === EDITAR PRUEBA EXISTENTE ===
+            testToSave = existingTest;
+            
+            // 1. Actualizar propiedades
+            testToSave.setTitle(title);
+            testToSave.setPrice(price);
+            
+            // 2. Verificar que tenga preguntas
+            if (testToSave.getQuestions().isEmpty()) {
+                showError("La prueba debe tener al menos una pregunta");
+                return;
+            }
+            
+            showSuccess("Prueba actualizada exitosamente: " + title);
         }
         
+        // 5. GUARDAR TODOS LOS DATOS
         appController.saveAll();
-        dispose();
+        
+        // 6. Cerrar el diálogo después de un breve retraso
+        Timer timer = new Timer(1500, e -> {
+            dispose();
+            // Notificar al diálogo padre para que refresque
+            if (getOwner() instanceof TestManagerDialog) {
+                ((TestManagerDialog) getOwner()).loadTests();
+            }
+        });
+        timer.setRepeats(false);
+        timer.start();
     }
     
     private String truncate(String text, int length) {
@@ -669,7 +770,7 @@ class TestEditorDialog extends JDialog {
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(new Color(220, 53, 69));
     }
 }
@@ -753,13 +854,13 @@ class QuestionDialog extends JDialog {
         JPanel bottomPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 15, 10));
         bottomPanel.setOpaque(false);
         
-        JButton saveButton = new JButton("💾 Guardar Pregunta");
+        JButton saveButton = new JButton("Guardar Pregunta");
         saveButton.setBackground(new Color(40, 167, 69));
         saveButton.setForeground(Color.BLACK);
         saveButton.addActionListener(e -> saveQuestion());
         bottomPanel.add(saveButton);
         
-        JButton cancelButton = new JButton("❌ Cancelar");
+        JButton cancelButton = new JButton("Cancelar");
         cancelButton.setBackground(new Color(220, 53, 69));
         cancelButton.setForeground(Color.BLACK);
         cancelButton.addActionListener(e -> dispose());
@@ -818,7 +919,7 @@ class QuestionDialog extends JDialog {
     }
     
     private void showError(String message) {
-        statusLabel.setText("❌ " + message);
+        statusLabel.setText(message);
         statusLabel.setForeground(new Color(220, 53, 69));
     }
 }

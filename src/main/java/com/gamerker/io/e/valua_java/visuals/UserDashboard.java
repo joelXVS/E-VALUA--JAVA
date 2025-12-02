@@ -137,6 +137,9 @@ public class UserDashboard extends JFrame {
         JLabel userIcon = new JLabel(emojiIcon);
         userIcon.setFont(emojiFont.deriveFont(48f)); // Usar fuente de emojis
         userIcon.setForeground(Color.BLACK);
+        
+        // Añadir margen superior al JLabel para que los emojis no se corten
+        userIcon.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 0)); // 5px arriba
         panel.add(userIcon);
         
         // Datos del usuario
@@ -144,32 +147,25 @@ public class UserDashboard extends JFrame {
         dataPanel.setLayout(new BoxLayout(dataPanel, BoxLayout.Y_AXIS));
         dataPanel.setOpaque(false);
         
-        // Nombre y rol con emoji
-        String roleEmoji = switch (currentUser.getRole()) {
-            case "admin" -> "👑";
-            case "teacher" -> "🎓";
-            default -> "📚";
-        };
-        
         JLabel nameLabel = new JLabel(currentUser.getDisplayName());
         nameLabel.setFont(new Font("Verdana", Font.BOLD, 20));
         nameLabel.setForeground(Color.BLACK);
         dataPanel.add(nameLabel);
         
-        JLabel roleLabel = new JLabel(roleEmoji + "Rol: " + currentUser.getRole().toUpperCase());
+        JLabel roleLabel = new JLabel("Rol: " + currentUser.getRole().toUpperCase());
         roleLabel.setFont(new Font("Verdana", Font.PLAIN, 14));
         roleLabel.setForeground(Color.BLACK);
         dataPanel.add(roleLabel);
-        
+            
         // Saldo y crédito con emoji
-        JLabel balanceLabel = new JLabel("💰" + String.format("Saldo: $%,.0f | %s", 
+        JLabel balanceLabel = new JLabel(String.format("Saldo: $%,.0f | %s", 
             currentUser.getBalance(), recharge.getBalanceStatus(currentUser)));
         balanceLabel.setFont(new Font("Verdana", Font.PLAIN, 12));
         balanceLabel.setForeground(Color.BLACK);
         dataPanel.add(balanceLabel);
         
         // Fecha de login con emoji
-        JLabel dateLabel = new JLabel("🕐 Login: " + LocalDateTime.now().format(
+        JLabel dateLabel = new JLabel("Login: " + LocalDateTime.now().format(
             DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss")));
         dateLabel.setFont(new Font("Verdana", Font.ITALIC, 11));
         dateLabel.setForeground(Color.BLACK);
@@ -198,25 +194,24 @@ public class UserDashboard extends JFrame {
         addTile(panel, "📊", "Mis Resultados", "Revisa tus resultados recientes", "3");
         addTile(panel, "💰", "Recargar Saldo", "Añade fondos a tu cuenta", "4");
         addTile(panel, "📄", "Factura del Día", "Genera tu factura de consumo", "5");
-        addTile(panel, "🏆", "Ranking Global", "Top estudiantes del sistema", "6");
-        addTile(panel, "🎯", "Ranking por Prueba", "Mejores puntuaciones por prueba", "7");
-        addTile(panel, "🗄️", "Almacenamiento", "Gestiona tu espacio de resultados", "8");
+        addTile(panel, "🏆", "Ranking", "Top estudiantes del sistema", "6");
+        addTile(panel, "🗄️", "Almacenamiento", "Gestiona tu espacio de resultados", "7");
         
         // ===== TILES EXCLUSIVOS PARA PROFESORES =====
         if (currentUser.getRole().equals("teacher")) {
-            addTile(panel, "➕", "Crear Prueba", "Diseña nuevas evaluaciones", "9");
-            addTile(panel, "📈", "Estadísticas", "Ver estadísticas de pruebas", "11");
-            addTile(panel, "👨‍🏫", "Mis Estudiantes", "Ver progreso de estudiantes", "12");
+            addTile(panel, "➕", "Crear Prueba", "Diseña nuevas evaluaciones", "8");
+            addTile(panel, "📈", "Estadísticas", "Ver estadísticas de pruebas", "10");
+            addTile(panel, "👨‍🏫", "Mis Estudiantes", "Ver progreso de estudiantes", "11");
         }
         
         // ===== TILES EXCLUSIVOS PARA ADMINISTRADORES =====
         if (currentUser.getRole().equals("admin")) {
-            addTile(panel, "➕", "Crear Prueba", "Diseña nuevas evaluaciones", "9");
-            addTile(panel,"🙍‍️", "Gestión de Usuarios", "Administra usuarios del sistema", "10");
-            addTile(panel, "📈", "Estadísticas", "Ver estadísticas del sistema", "11");
-            addTile(panel, "🔧", "Configuración", "Configurar sistema", "13");
-            addTile(panel, "📋", "Reportes", "Generar reportes del sistema", "14");
-            addTile(panel, "💾", "Backup", "Respaldar datos del sistema", "15");
+            addTile(panel, "➕", "Crear Prueba", "Diseña nuevas evaluaciones", "8");
+            addTile(panel,"🙍‍️", "Gestión de Usuarios", "Administra usuarios del sistema", "9");
+            addTile(panel, "📈", "Estadísticas", "Ver estadísticas del sistema", "10");
+            addTile(panel, "🔧", "Configuración", "Configurar sistema", "12");
+            addTile(panel, "📋", "Reportes", "Generar reportes del sistema", "13");
+            addTile(panel, "💾", "Backup", "Respaldar datos del sistema", "14");
         }
         
         return panel;
@@ -311,7 +306,7 @@ public class UserDashboard extends JFrame {
         panel.setOpaque(false);
         panel.setBorder(BorderFactory.createEmptyBorder(20, 0, 20, 0));
         
-        JButton logoutButton = new JButton("⏻ Cerrar Sesión");
+        JButton logoutButton = new JButton("🚪 Cerrar Sesión");
         logoutButton.setFont(emojiFont.deriveFont(16f)); // Usar fuente de emojis para el ícono
         logoutButton.setBackground(new Color(220, 53, 69)); // Rojo suave
         logoutButton.setForeground(Color.BLACK);
@@ -349,16 +344,15 @@ public class UserDashboard extends JFrame {
             case "3" -> mostrarResultados();
             case "4" -> recargarSaldo();
             case "5" -> generarFactura();
-            case "6" -> mostrarRankingGlobal();
-            case "7" -> mostrarRankingPrueba();
-            case "8" -> gestionarAlmacenamiento();
-            case "9" -> crearPrueba();
-            case "10" -> gestionarUsuarios();
-            case "11" -> mostrarEstadisticas();
-            case "12" -> gestionarEstudiantes();
-            case "13" -> mostrarConfiguracion();
-            case "14" -> generarReportes();
-            case "15" -> realizarBackup();
+            case "6" -> mostrarRankingPanel();
+            case "7" -> gestionarAlmacenamiento();
+            case "8" -> crearPrueba();
+            case "9" -> gestionarUsuarios();
+            case "10" -> mostrarEstadisticas();
+            case "11" -> gestionarEstudiantes();
+            case "12" -> mostrarConfiguracion();
+            case "13" -> generarReportes();
+            case "14" -> realizarBackup();
             default -> JOptionPane.showMessageDialog(this, "Opción no implementada", "Información", JOptionPane.INFORMATION_MESSAGE);
         }
     }
@@ -431,18 +425,9 @@ public class UserDashboard extends JFrame {
         }
     }
     
-    private void mostrarRankingGlobal() {
-        RankingDialog rankingGlobal = new RankingDialog(this, currentUser, appController);
-        rankingGlobal.createGlobalTablePanel();
-        rankingGlobal.createStatusPanel();
-        rankingGlobal.setVisible(true);
-    }
-    
-    private void mostrarRankingPrueba() {
-        RankingDialog rankingGlobal = new RankingDialog(this, currentUser, appController);
-        rankingGlobal.createTestTablePanel();
-        rankingGlobal.createStatusPanel();
-        rankingGlobal.setVisible(true);
+    private void mostrarRankingPanel() {
+        RankingDialog rankingDg = new RankingDialog(this, currentUser, appController);
+        rankingDg.setVisible(true);
     }
     
     private void gestionarAlmacenamiento() {
@@ -473,7 +458,8 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this, "📊 Estadísticas - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+        StatisticsDialog statics = new StatisticsDialog(this, currentUser, appController);
+        statics.setVisible(true);
     }
     
     private void gestionarEstudiantes() {
@@ -481,7 +467,8 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this, "👨‍🏫 Gestión de Estudiantes - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+        ManageStudentsDialog studentsManager = new ManageStudentsDialog(this, currentUser, appController);
+        studentsManager.setVisible(true);
     }
     
     private void mostrarConfiguracion() {
@@ -489,7 +476,8 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this, "🔧 Configuración del Sistema - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+        ConfigurationDialog settings = new ConfigurationDialog(this, currentUser, appController);
+        settings.setVisible(true);
     }
     
     private void generarReportes() {
@@ -497,7 +485,8 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this, "📋 Reportes del Sistema - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+        ReportsDialog reportes = new ReportsDialog(this, currentUser, appController);
+        reportes.setVisible(true);
     }
     
     private void realizarBackup() {
@@ -505,7 +494,8 @@ public class UserDashboard extends JFrame {
             JOptionPane.showMessageDialog(this, "❌ Acceso denegado.", "Error", JOptionPane.ERROR_MESSAGE);
             return;
         }
-        JOptionPane.showMessageDialog(this, "💾 Backup del Sistema - En desarrollo", "Información", JOptionPane.INFORMATION_MESSAGE);
+        BackupDialog doBackup = new BackupDialog(this, currentUser, appController);
+        doBackup.setVisible(true);
     }
     
     /**

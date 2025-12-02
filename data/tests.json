@@ -1,1 +1,942 @@
-[]
+[
+  {
+    "title": "Mentes Matemáticas",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "¿Cuánto es 12*8?",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "80",
+          "96",
+          "108",
+          "120"
+        ]
+      },
+      {
+        "questionText": "Si x\u003d3, evalúa 2x+5",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "9",
+          "10",
+          "11",
+          "12"
+        ]
+      },
+      {
+        "questionText": "Suma: 145+76",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "221",
+          "223",
+          "231",
+          "215"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es la raíz de 169?",
+        "type": "math",
+        "correctAnswer": "D",
+        "options": [
+          "9",
+          "11",
+          "12",
+          "13"
+        ]
+      },
+      {
+        "questionText": "Ordena de menor a mayor: 0.2, 0.02, 0.5",
+        "type": "logic",
+        "correctAnswer": "A",
+        "options": [
+          "0.02,0.2,0.5",
+          "0.2,0.02,0.5",
+          "0.5,0.2,0.02",
+          "0.02,0.5,0.2"
+        ]
+      },
+      {
+        "questionText": "Encuentra el patrón: 3,6,12,24...",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "30",
+          "42",
+          "48",
+          "60"
+        ]
+      },
+      {
+        "questionText": "Capital de Francia",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "París",
+          "Roma",
+          "Madrid",
+          "Berlín"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es un mamífero?",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "Tiburón",
+          "Perro",
+          "Sapo",
+          "Pez"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Lógica Suprema",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "Patrón: 2,4,8,16...",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "20",
+          "22",
+          "32",
+          "28"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no pertenece?: gato, perro, vaca, roca",
+        "type": "logic",
+        "correctAnswer": "D",
+        "options": [
+          "gato",
+          "perro",
+          "vaca",
+          "roca"
+        ]
+      },
+      {
+        "questionText": "Si hoy es martes, ¿qué día será en 3 días?",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "viernes",
+          "jueves",
+          "lunes",
+          "sábado"
+        ]
+      },
+      {
+        "questionText": "Ordena: P, M, A, T",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "M,A,P,T",
+          "A,M,P,T",
+          "A,P,M,T",
+          "P,A,M,T"
+        ]
+      },
+      {
+        "questionText": "Suma 55+44",
+        "type": "math",
+        "correctAnswer": "D",
+        "options": [
+          "88",
+          "90",
+          "92",
+          "99"
+        ]
+      },
+      {
+        "questionText": "¿Cuánto es 9^2?",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "72",
+          "80",
+          "81",
+          "99"
+        ]
+      },
+      {
+        "questionText": "Capital de Japón",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "Osaka",
+          "Tokio",
+          "Seúl",
+          "Beijing"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es un elemento químico?",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "Helio",
+          "Bronce",
+          "Hielo",
+          "Arena"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Math Rush",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "15*7",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "95",
+          "105",
+          "110",
+          "100"
+        ]
+      },
+      {
+        "questionText": "Raíz de 225",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "10",
+          "13",
+          "15",
+          "18"
+        ]
+      },
+      {
+        "questionText": "¿Cuánto es 250/5?",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "50",
+          "45",
+          "55",
+          "60"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no pertenece? 12, 18, 24, 35",
+        "type": "logic",
+        "correctAnswer": "D",
+        "options": [
+          "12",
+          "18",
+          "24",
+          "35"
+        ]
+      },
+      {
+        "questionText": "Patrón: 10,7,4,1...",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "0",
+          "-2",
+          "-3",
+          "2"
+        ]
+      },
+      {
+        "questionText": "Animal ovíparo",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Perro",
+          "Vaca",
+          "Gallina",
+          "Delfín"
+        ]
+      },
+      {
+        "questionText": "País con más población",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "EE.UU.",
+          "Brasil",
+          "Rusia",
+          "China"
+        ]
+      },
+      {
+        "questionText": "¿Qué es H2O?",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "Agua",
+          "Oxígeno",
+          "Ácido",
+          "Sal"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Cerebros en Acción",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "7*11",
+        "type": "math",
+        "correctAnswer": "D",
+        "options": [
+          "70",
+          "65",
+          "85",
+          "77"
+        ]
+      },
+      {
+        "questionText": "Si n\u003d4, evalúa n²+3",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "16",
+          "19",
+          "19",
+          "10"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es un primate?",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "Lagarto",
+          "Humano",
+          "Tiburón",
+          "Ballena"
+        ]
+      },
+      {
+        "questionText": "Patrón: 5,10,20,40...",
+        "type": "logic",
+        "correctAnswer": "A",
+        "options": [
+          "80",
+          "60",
+          "70",
+          "100"
+        ]
+      },
+      {
+        "questionText": "Resta: 180-76",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "120",
+          "110",
+          "104",
+          "102"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no es un continente?",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "Asia",
+          "Europa",
+          "África",
+          "País Vasco"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es un mamífero marino?",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Atún",
+          "Caracol",
+          "Orca",
+          "Sardina"
+        ]
+      },
+      {
+        "questionText": "¿Cuánto es 3^4?",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "64",
+          "81",
+          "72",
+          "27"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Retos del Lógico",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "Patrón: 1,1,2,3,5,8...",
+        "type": "logic",
+        "correctAnswer": "A",
+        "options": [
+          "13",
+          "10",
+          "12",
+          "14"
+        ]
+      },
+      {
+        "questionText": "Elige la figura distinta: □,■,□,○",
+        "type": "logic",
+        "correctAnswer": "D",
+        "options": [
+          "□",
+          "■",
+          "□",
+          "○"
+        ]
+      },
+      {
+        "questionText": "Suma: 300+125",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "410",
+          "425",
+          "425",
+          "430"
+        ]
+      },
+      {
+        "questionText": "¿Cuánto es 45/9?",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "5",
+          "6",
+          "4",
+          "7"
+        ]
+      },
+      {
+        "questionText": "Símbolo químico de Sodio",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "S",
+          "Na",
+          "So",
+          "Sd"
+        ]
+      },
+      {
+        "questionText": "Animal carnívoro",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Cabra",
+          "Caballo",
+          "León",
+          "Vaca"
+        ]
+      },
+      {
+        "questionText": "Capital de México",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "Guadalajara",
+          "Monterrey",
+          "Puebla",
+          "Ciudad de México"
+        ]
+      },
+      {
+        "questionText": "Multiplica: 16*6",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "96",
+          "100",
+          "90",
+          "92"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Desafío Total",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "Raíz de 144",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "10",
+          "11",
+          "12",
+          "14"
+        ]
+      },
+      {
+        "questionText": "¿Cuánto es 500/4?",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "125",
+          "100",
+          "150",
+          "140"
+        ]
+      },
+      {
+        "questionText": "Patrón: 20,18,16,14...",
+        "type": "logic",
+        "correctAnswer": "D",
+        "options": [
+          "10",
+          "9",
+          "8",
+          "12"
+        ]
+      },
+      {
+        "questionText": "¿Qué animal es un reptil?",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Gato",
+          "Ballena",
+          "Iguana",
+          "Mosca"
+        ]
+      },
+      {
+        "questionText": "Letra que sigue: A,C,E,G...",
+        "type": "logic",
+        "correctAnswer": "B",
+        "options": [
+          "H",
+          "I",
+          "K",
+          "J"
+        ]
+      },
+      {
+        "questionText": "¿Cuánto es 18*3?",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "40",
+          "45",
+          "54",
+          "56"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no es un color primario?",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "Verde",
+          "Rojo",
+          "Azul",
+          "Amarillo"
+        ]
+      },
+      {
+        "questionText": "Animal que vuela",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "Rana",
+          "Gato",
+          "Delfín",
+          "Águila"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Súper Quiz Mix",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "9*8",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "72",
+          "69",
+          "81",
+          "70"
+        ]
+      },
+      {
+        "questionText": "Patrón: 100,50,25...",
+        "type": "logic",
+        "correctAnswer": "D",
+        "options": [
+          "20",
+          "10",
+          "5",
+          "12.5"
+        ]
+      },
+      {
+        "questionText": "Nombre científico del agua",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "O2",
+          "H2O",
+          "CO2",
+          "OH"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es un ave?",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Zorro",
+          "Tiburón",
+          "Cóndor",
+          "Gato"
+        ]
+      },
+      {
+        "questionText": "Suma: 88+12",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "100",
+          "96",
+          "102",
+          "92"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no pertenece a días hábiles?",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "Lunes",
+          "Martes",
+          "Jueves",
+          "Domingo"
+        ]
+      },
+      {
+        "questionText": "Si x\u003d10 evalúa x/2",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "4",
+          "5",
+          "6",
+          "8"
+        ]
+      },
+      {
+        "questionText": "Número primo",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "9",
+          "21",
+          "23",
+          "25"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Mega Test Mental",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "25*4",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "50",
+          "80",
+          "100",
+          "75"
+        ]
+      },
+      {
+        "questionText": "Patrón: 3,9,27...",
+        "type": "logic",
+        "correctAnswer": "A",
+        "options": [
+          "81",
+          "72",
+          "54",
+          "100"
+        ]
+      },
+      {
+        "questionText": "Líquido vital humano",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "Leche",
+          "Sangre",
+          "Saliva",
+          "Aire"
+        ]
+      },
+      {
+        "questionText": "¿Qué es una bacteria?",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Animal",
+          "Hongo",
+          "Microorganismo",
+          "Virus"
+        ]
+      },
+      {
+        "questionText": "Suma: 19+32",
+        "type": "math",
+        "correctAnswer": "D",
+        "options": [
+          "48",
+          "47",
+          "49",
+          "51"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no es planeta?",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "Plutón",
+          "Marte",
+          "Urano",
+          "Venus"
+        ]
+      },
+      {
+        "questionText": "Raíz de 81",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "7",
+          "8",
+          "9",
+          "10"
+        ]
+      },
+      {
+        "questionText": "Animal herbívoro",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "León",
+          "Lobo",
+          "Gato",
+          "Vaca"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Ultimate Brain Test",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "11*11",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "100",
+          "110",
+          "121",
+          "111"
+        ]
+      },
+      {
+        "questionText": "Patrón: 2,3,5,8,12...",
+        "type": "logic",
+        "correctAnswer": "D",
+        "options": [
+          "15",
+          "16",
+          "18",
+          "17"
+        ]
+      },
+      {
+        "questionText": "Capital de Argentina",
+        "type": "general",
+        "correctAnswer": "B",
+        "options": [
+          "Córdoba",
+          "Buenos Aires",
+          "Mendoza",
+          "Salta"
+        ]
+      },
+      {
+        "questionText": "Animal con aletas",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "Pez",
+          "Perro",
+          "Gato",
+          "Conejo"
+        ]
+      },
+      {
+        "questionText": "Si x\u003d2 evalúa 3x²",
+        "type": "math",
+        "correctAnswer": "C",
+        "options": [
+          "8",
+          "10",
+          "12",
+          "14"
+        ]
+      },
+      {
+        "questionText": "¿Cuál no pertenece? rojo, azul, círculo, verde",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "rojo",
+          "azul",
+          "círculo",
+          "verde"
+        ]
+      },
+      {
+        "questionText": "Suma: 150+25",
+        "type": "math",
+        "correctAnswer": "A",
+        "options": [
+          "175",
+          "165",
+          "180",
+          "185"
+        ]
+      },
+      {
+        "questionText": "Elemento metálico",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "Agua",
+          "Madera",
+          "Hielo",
+          "Hierro"
+        ]
+      }
+    ]
+  },
+  {
+    "title": "Combo Inteligente",
+    "price": 5000.0,
+    "questions": [
+      {
+        "questionText": "30/5",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "4",
+          "6",
+          "8",
+          "10"
+        ]
+      },
+      {
+        "questionText": "Letra siguiente: B, D, F...",
+        "type": "logic",
+        "correctAnswer": "A",
+        "options": [
+          "H",
+          "I",
+          "G",
+          "J"
+        ]
+      },
+      {
+        "questionText": "¿Cuál es un insecto?",
+        "type": "general",
+        "correctAnswer": "C",
+        "options": [
+          "Sapo",
+          "Rana",
+          "Hormiga",
+          "Tiburón"
+        ]
+      },
+      {
+        "questionText": "Multiplica: 14*3",
+        "type": "math",
+        "correctAnswer": "D",
+        "options": [
+          "34",
+          "36",
+          "40",
+          "42"
+        ]
+      },
+      {
+        "questionText": "Patrón: 6,12,24,48...",
+        "type": "logic",
+        "correctAnswer": "C",
+        "options": [
+          "52",
+          "60",
+          "96",
+          "80"
+        ]
+      },
+      {
+        "questionText": "¿Qué país está en Europa?",
+        "type": "general",
+        "correctAnswer": "A",
+        "options": [
+          "Italia",
+          "Chile",
+          "Japón",
+          "Canadá"
+        ]
+      },
+      {
+        "questionText": "Raíz de 121",
+        "type": "math",
+        "correctAnswer": "B",
+        "options": [
+          "10",
+          "11",
+          "12",
+          "14"
+        ]
+      },
+      {
+        "questionText": "Animal nocturno",
+        "type": "general",
+        "correctAnswer": "D",
+        "options": [
+          "Gallina",
+          "Perro",
+          "Caballo",
+          "Búho"
+        ]
+      }
+    ]
+  }
+]

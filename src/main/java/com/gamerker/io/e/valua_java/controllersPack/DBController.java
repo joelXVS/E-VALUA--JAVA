@@ -19,6 +19,7 @@ import com.google.gson.JsonDeserializer;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import java.lang.reflect.Type;
+import java.time.Duration;
 /**
  *
  * @author hp
@@ -189,8 +190,9 @@ public class DBController implements Manageable {
                 for (JsonElement ans : answersArray) {
                     answers.add(ans.getAsString());
                 }
-
-                Result result = new Result(studentUsername, testTitle, score, total, percentage, answers);
+                
+                Duration simulatedTime = Duration.ofMinutes(3).plusSeconds(15);
+                Result result = new Result(studentUsername, testTitle, score, total, percentage, answers, simulatedTime);
 
                 if (obj.has("archived")) {
                     result.setArchived(obj.get("archived").getAsBoolean());

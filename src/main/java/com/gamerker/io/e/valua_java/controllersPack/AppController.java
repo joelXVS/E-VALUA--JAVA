@@ -13,6 +13,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.io.IOException;
+import java.time.Duration;
 import java.util.*;
 /**
  *
@@ -484,6 +485,7 @@ public class AppController {
                 answers.add(userAnswer.isEmpty() ? "(sin respuesta)" : userAnswer);
             }
 
+            Duration simulatedTime = Duration.ofMinutes(3).plusSeconds(15);
             double percentage = test.getTotalQuestions() > 0 ?
                     (correctCount * 100.0 / test.getTotalQuestions()) : 0;
 
@@ -493,7 +495,8 @@ public class AppController {
                     correctCount,
                     test.getTotalQuestions(),
                     percentage,
-                    answers
+                    answers,
+                    simulatedTime
             );
 
             results.add(result);
@@ -1259,15 +1262,15 @@ public class AppController {
     }
     
     public List<User> getUsers() {
-        return db.loadUsers();
+        return users;
     }
     
     public List<Test> getTests() {
-        return db.loadTests();
+        return tests;
     }
     
     public List<Result> getResults() {
-        return db.loadResults();
+        return results;
     }
 
     public BillingController getBillingController() {
